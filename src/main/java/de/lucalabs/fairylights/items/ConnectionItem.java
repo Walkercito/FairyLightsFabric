@@ -9,6 +9,8 @@ import de.lucalabs.fairylights.entity.FenceFastenerEntity;
 import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import java.util.Optional;
+import java.util.function.Consumer;
+import net.minecraft.ChatFormatting;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.nbt.CompoundTag;
@@ -19,9 +21,12 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.decoration.BlockAttachedEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.item.context.UseOnContext;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
@@ -172,6 +177,17 @@ public abstract class ConnectionItem extends Item {
                 world,
                 FairyLightComponents.FASTENER.get(fastener).get().orElseThrow(IllegalStateException::new),
                 playConnectSound);
+    }
+
+    @Override
+    public void appendHoverText(
+            final ItemStack stack,
+            final Item.TooltipContext context,
+            final TooltipDisplay display,
+            final Consumer<Component> tooltip,
+            final TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
+        tooltip.accept(Component.translatable("tooltip.fairylights.connection").withStyle(ChatFormatting.GRAY));
     }
 
     public CompoundTag serializeLogic(final ItemStack stack) {

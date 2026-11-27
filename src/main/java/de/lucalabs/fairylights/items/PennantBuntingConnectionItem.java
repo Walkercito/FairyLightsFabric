@@ -56,6 +56,7 @@ public class PennantBuntingConnectionItem extends ConnectionItem {
             final TooltipDisplay display,
             final Consumer<Component> tooltip,
             final TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
         final CompoundTag text = stack.get(FairyLightItemComponents.TEXT);
         if (text != null) {
             final StyledString s = StyledString.deserialize(text);

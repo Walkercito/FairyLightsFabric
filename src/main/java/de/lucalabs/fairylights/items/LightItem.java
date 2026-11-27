@@ -35,7 +35,7 @@ public class LightItem extends BlockItem {
             final TooltipFlag flag) {
         super.appendHoverText(stack, context, display, tooltip, flag);
         if (stack.getOrDefault(FairyLightItemComponents.TWINKLE, false)) {
-            tooltip.accept(Component.translatable("item.fairyLights.twinkle").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
+            tooltip.accept(Component.translatable("item.fairylights.twinkle").withStyle(ChatFormatting.GRAY, ChatFormatting.ITALIC));
         }
         final List<Integer> colors = stack.get(FairyLightItemComponents.COLORS);
         if (colors != null) {

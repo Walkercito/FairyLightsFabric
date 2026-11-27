@@ -1,82 +1,48 @@
 {
     "itemGroup.fairylights": "Fairy Lights",
-
     "fairylights.config": "Fairy Lights instellingen",
-
     "block.fairylights.fastener": "Haakje",
-
+    "item.fairylights.fastener": "Haakje",
     "item.fairylights.hanging_lights": "Hangende lichtjes",
     "item.fairylights.garland": "Guirlande",
     "item.fairylights.tinsel": "Folie slinger",
-
-    "item.fairyLights.pattern": "Patroon:",
-    "item.fairyLights.twinkle": "Twinkelen",
-    "item.fairyLights.tight": "Gespannen",
-
+    "item.fairylights.twinkle": "Twinkelen",
     "item.fairylights.pennant_bunting": "Vlaggenslinger",
-    "item.pennantBunting.colors": "Kleuren:",
-
     "item.fairylights.letter_bunting": "Letterslinger",
-
     "item.fairylights.pennant": "Vlag",
-
-    "item.light.name": "Lichtje",
     "block.fairylights.fairy_light": "Kerstverlichting",
+    "item.fairylights.fairy_light": "Kerstverlichting",
     "block.fairylights.paper_lantern": "Papieren lantaarn",
+    "item.fairylights.paper_lantern": "Papieren lantaarn",
     "block.fairylights.orb_lantern": "Bolvormige lantaarn",
+    "item.fairylights.orb_lantern": "Bolvormige lantaarn",
     "block.fairylights.flower_light": "Bloemenlampje",
+    "item.fairylights.flower_light": "Bloemenlampje",
     "block.fairylights.ornate_lantern": "Versierde lantaarn",
+    "item.fairylights.ornate_lantern": "Versierde lantaarn",
     "block.fairylights.oil_lantern": "Olielantaarn",
-    "item.light.luxoBall.name": "Luxo bal",
+    "item.fairylights.oil_lantern": "Olielantaarn",
     "block.fairylights.jack_o_lantern": "Jack-o'-lantern",
+    "item.fairylights.jack_o_lantern": "Jack-o'-lantern",
     "block.fairylights.skull_light": "Schedellampje",
+    "item.fairylights.skull_light": "Schedellampje",
     "block.fairylights.ghost_light": "Ghostlampje",
+    "item.fairylights.ghost_light": "Ghostlampje",
     "block.fairylights.spider_light": "Spinnenlampje",
+    "item.fairylights.spider_light": "Spinnenlampje",
     "block.fairylights.witch_light": "Heksenlampje",
+    "item.fairylights.witch_light": "Heksenlampje",
     "block.fairylights.snowflake_light": "Sneeuwvloklampje",
+    "item.fairylights.snowflake_light": "Sneeuwvloklampje",
     "block.fairylights.icicle_lights": "IJspegelverlichting",
+    "item.fairylights.icicle_lights": "IJspegelverlichting",
     "block.fairylights.meteor_light": "Meteor regen licht",
-
+    "item.fairylights.meteor_light": "Meteor regen licht",
     "item.fairylights.ladder": "Trapladder",
-
-    "entity.fairylights.fastener": "Haak",
-    "entity.fairylights.ladder": "Trapladder",
-
-    "gui.editLetteredConnection.name": "Stel letterslinger tekst in:",
-
+    "fairylights.editLetteredConnection": "Stel letterslinger tekst in:",
     "recipe.ingredient.tooltip": "§7%s",
-    "recipe.ingredient.auxiliary.optional": "(Facultatief)",
-    "recipe.hangingLights.glowstone": "Hierdoor zullen lampjes fonkelen",
-    "recipe.hangingLights.light": "Voeg lampjes toe om het patroon te veranderen",
-    "recipe.pennantBunting.pennant": "Voeg vlaggetjes toe om het patroon te veranderen",
-
-    "format.pattern.entry": "  %1$s",
-    "format.colored": "%1$s %2$s",
-    "format.text": "Tekst: %1$s",
-
-    "color.black.name": "Zwart",
-    "color.red.name": "Rood",
-    "color.green.name": "Groen",
-    "color.brown.name": "Bruin",
-    "color.blue.name": "Blauw",
-    "color.purple.name": "Paars",
-    "color.cyan.name": "Cyaan",
-    "color.light_gray.name": "Lichtgrijs",
-    "color.gray.name": "Grijs",
-    "color.pink.name": "Roze",
-    "color.lime.name": "Limoen",
-    "color.yellow.name": "Geel",
-    "color.light_blue.name": "Lichtblauw",
-    "color.magenta.name": "Magenta",
-    "color.orange.name": "Oranje",
-    "color.white.name": "Wit",
-
-    "subtitles.block.jingleBell": "Bel luidt",
-    "subtitles.block.cord.connect": "Koord verbonden",
-    "subtitles.block.cord.disconnect": "Koord koppelt los",
-    "subtitles.block.cord.stretch": "Koord rekt uit",
-    "subtitles.block.cord.snap": "Koord breekt",
-    "subtitles.block.feature.lightTurnOn": "Lichtjes klikken aan",
-    "subtitles.block.feature.lightTurnOff": "Lichtjes klikken uit",
-    "subtitles.block.feature.colorChange": "Lichtje plopt"
+    "recipe.fairylights.ingredient.auxiliary.optional": "(Facultatief)",
+    "recipe.fairylights.twinkling_lights.glowstone": "Hierdoor zullen lampjes fonkelen",
+    "recipe.fairylights.hangingLights.light": "Voeg lampjes toe om het patroon te veranderen",
+    "recipe.fairylights.pennantBunting.pennant": "Voeg vlaggetjes toe om het patroon te veranderen"
 }

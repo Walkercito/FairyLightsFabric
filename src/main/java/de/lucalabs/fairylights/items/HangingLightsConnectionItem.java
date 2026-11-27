@@ -82,6 +82,7 @@ public final class HangingLightsConnectionItem extends ConnectionItem {
             final TooltipDisplay display,
             final Consumer<Component> tooltip,
             final TooltipFlag flag) {
+        super.appendHoverText(stack, context, display, tooltip, flag);
         final Identifier name = stack.get(FairyLightItemComponents.STRING);
         if (name != null) {
             tooltip.accept(Component.translatable("item." + name.getNamespace() + "." + name.getPath()).withStyle(ChatFormatting.GRAY));
