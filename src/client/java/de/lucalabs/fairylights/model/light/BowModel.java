@@ -9,13 +9,12 @@ import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
 import net.minecraft.client.model.geom.builders.PartDefinition;
-import net.minecraft.client.renderer.RenderType;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 
-public class BowModel extends Model {
+public class BowModel {
     private final ModelPart root;
 
     public BowModel(ModelPart root) {
-        super(RenderType::entityCutout);
         this.root = root;
     }
 
@@ -39,7 +38,6 @@ public class BowModel extends Model {
         return LayerDefinition.create(mesh, 128, 128);
     }
 
-    @Override
     public void renderToBuffer(
             final PoseStack matrix,
             final VertexConsumer builder,
@@ -50,6 +48,6 @@ public class BowModel extends Model {
             final float b,
             final float a) {
 
-        this.root.render(matrix, builder, light, overlay, r, g, b, a);
+        RenderUtils.renderPart(this.root, matrix, builder, light, overlay, r, g, b, a);
     }
 }

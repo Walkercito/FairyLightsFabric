@@ -5,11 +5,10 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.feature.light.Light;
 import de.lucalabs.fairylights.feature.light.LightBehavior;
 import de.lucalabs.fairylights.util.BoxBuilder;
-import net.minecraft.client.model.Model;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.client.renderer.RenderType;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +17,7 @@ import org.joml.Quaternionf;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class LightModel<T extends LightBehavior> extends Model {
+public abstract class LightModel<T extends LightBehavior> {
     protected final ModelPart lit;
     protected final ModelPart litTint;
     protected final ModelPart litTintGlow;
@@ -37,7 +36,6 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     private boolean powered;
 
     public LightModel(ModelPart root) {
-        super(RenderType::entityTranslucent);
         this.lit = root.getChild("lit");
         this.litTint = root.getChild("lit_tint");
         this.litTintGlow = root.getChild("lit_tint_glow");
@@ -106,7 +104,6 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         this.powered = light.isPowered();
     }
 
-    @Override
     public void renderToBuffer(
             final PoseStack matrix,
             final VertexConsumer builder,
@@ -117,15 +114,15 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
             final float b,
             final float a) {
 
-        this.unlit.render(matrix, builder, light, overlay, r, g, b, a);
+        RenderUtils.renderPart(this.unlit, matrix, builder, light, overlay, r, g, b, a);
         final int emissiveLight = this.getLight(light);
-        this.lit.render(matrix, builder, emissiveLight, overlay, r, g, b, a);
-        this.litTint.render(matrix, builder, emissiveLight, overlay, r * this.red, g * this.green, b * this.blue, a);
+        RenderUtils.renderPart(this.lit, matrix, builder, emissiveLight, overlay, r, g, b, a);
+        RenderUtils.renderPart(this.litTint, matrix, builder, emissiveLight, overlay, r * this.red, g * this.green, b * this.blue, a);
     }
 
     public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
         final float v = this.brightness;
-        this.litTintGlow.render(matrix, builder, this.getLight(light), overlay, r * this.red * v + (1.0F - v), g * this.green * v + (1.0F - v), b * this.blue * v + (1.0F - v), v * 0.15F + 0.2F);
+        RenderUtils.renderPart(this.litTintGlow, matrix, builder, this.getLight(light), overlay, r * this.red * v + (1.0F - v), g * this.green * v + (1.0F - v), b * this.blue * v + (1.0F - v), v * 0.15F + 0.2F);
     }
 
     protected int getLight(final int packedLight) {
@@ -150,46 +147,44 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         final BoxBuilder builder = new BoxBuilder();
 
         @Override
-        public VertexConsumer vertex(final double x, final double y, final double z) {
+        public VertexConsumer addVertex(final float x, final float y, final float z) {
             this.builder.include(x, y, z);
             return this;
         }
 
         @Override
-        public VertexConsumer color(int r, int g, int b, int a) {
+        public VertexConsumer setColor(final int r, final int g, final int b, final int a) {
             return this;
         }
 
         @Override
-        public VertexConsumer uv(float u, float v) {
+        public VertexConsumer setColor(final int color) {
             return this;
         }
 
         @Override
-        public VertexConsumer overlayCoords(int u, int v) {
+        public VertexConsumer setUv(final float u, final float v) {
             return this;
         }
 
         @Override
-        public VertexConsumer uv2(int u, int v) {
+        public VertexConsumer setUv1(final int u, final int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer normal(float x, float y, float z) {
+        public VertexConsumer setUv2(final int u, final int v) {
             return this;
         }
 
         @Override
-        public void endVertex() {
+        public VertexConsumer setNormal(final float x, final float y, final float z) {
+            return this;
         }
 
         @Override
-        public void defaultColor(int r, int g, int b, int a) {
-        }
-
-        @Override
-        public void unsetDefaultColor() {
+        public VertexConsumer setLineWidth(final float width) {
+            return this;
         }
 
         AABB build() {

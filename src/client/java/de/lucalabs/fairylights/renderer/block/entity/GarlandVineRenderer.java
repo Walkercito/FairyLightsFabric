@@ -2,9 +2,10 @@ package de.lucalabs.fairylights.renderer.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.connection.GarlandVineConnection;
 import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
-import de.lucalabs.fairylights.renderer.RenderConstants;
 import de.lucalabs.fairylights.util.Curve;
 import de.lucalabs.fairylights.util.MathHelper;
 import de.lucalabs.fairylights.util.RandomArray;
@@ -15,8 +16,7 @@ import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import java.util.function.Function;
 
 public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnection> {
@@ -36,22 +36,21 @@ public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnectio
             final Curve catenary,
             final float delta,
             final PoseStack matrix,
-            final MultiBufferSource source,
+            final VertexConsumer buf,
             final int packedLight,
             final int packedOverlay) {
-        super.render(conn, catenary, delta, matrix, source, packedLight, packedOverlay);
+        super.render(conn, catenary, delta, matrix, buf, packedLight, packedOverlay);
         final int hash = conn.getUUID().hashCode();
-        final VertexConsumer buf = RenderConstants.SOLID_TEXTURE.buffer(source, RenderType::entityCutout);
         catenary.visitPoints(0.25F, false, (index, x, y, z, yaw, pitch) -> {
-            matrix.push();
+            matrix.pushPose();
             matrix.translate(x, y, z);
-            matrix.multiply(RotationAxis.POSITIVE_Y.rotation(-yaw));
-            matrix.multiply(RotationAxis.POSITIVE_Z.rotation(pitch));
-            matrix.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(RAND.get(index + hash) * 45.0F));
-            matrix.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(RAND.get(index + 8 + hash) * 60.F + 90.0F));
+            matrix.mulPose(Axis.YP.rotation(-yaw));
+            matrix.mulPose(Axis.ZP.rotation(pitch));
+            matrix.mulPose(Axis.ZP.rotationDegrees(RAND.get(index + hash) * 45.0F));
+            matrix.mulPose(Axis.YP.rotationDegrees(RAND.get(index + 8 + hash) * 60.F + 90.0F));
             this.rings.setWhich(index % RING_COUNT);
-            this.rings.render(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
-            matrix.pop();
+            this.rings.renderToBuffer(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+            matrix.popPose();
         });
     }
 
@@ -59,13 +58,12 @@ public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnectio
         return WireModel.createLayer(39, 0, 1);
     }
 
-    public static class RingsModel extends Model {
+    public static class RingsModel {
         final ModelPart[] roots;
         int which;
 
         RingsModel(final ModelPart root) {
-            super(RenderType::entityCutout);
-            ModelPart[] roots = new ModelPart[RING_COUNT];
+                ModelPart[] roots = new ModelPart[RING_COUNT];
             for (int i = 0; i < RING_COUNT; i++) {
                 roots[i] = root.getChild(Integer.toString(i));
             }
@@ -93,9 +91,8 @@ public class GarlandVineRenderer extends ConnectionRenderer<GarlandVineConnectio
             this.which = which;
         }
 
-        @Override
         public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-            this.roots[this.which].render(matrix, builder, light, overlay, r, g, b, a);
+            RenderUtils.renderPart(this.roots[this.which], matrix, builder, light, overlay, r, g, b, a);
         }
     }
 }

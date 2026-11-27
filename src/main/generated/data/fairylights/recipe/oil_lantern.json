@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass_pane",
+    "I": "minecraft:iron_ingot",
+    "S": "minecraft:stick",
+    "T": "minecraft:torch"
+  },
+  "pattern": [
+    " I ",
+    "STS",
+    "IGI"
+  ],
+  "result": {
+    "count": 4,
+    "id": "fairylights:oil_lantern"
+  }
+}

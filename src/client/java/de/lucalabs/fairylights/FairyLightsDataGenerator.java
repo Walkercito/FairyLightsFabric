@@ -8,6 +8,6 @@ public class FairyLightsDataGenerator implements DataGeneratorEntrypoint {
 	@Override
 	public void onInitializeDataGenerator(FabricDataGenerator fabricDataGenerator) {
 		FabricDataGenerator.Pack pack = fabricDataGenerator.createPack();
-		pack.addProvider(FairyLightRecipeProvider::new);
+		pack.addProvider((FabricDataGenerator.Pack.RegistryDependentFactory<FairyLightRecipeProvider>) FairyLightRecipeProvider::new);
 	}
 }

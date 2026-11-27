@@ -1,5 +1,6 @@
 package de.lucalabs.fairylights.model.light;
 
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.feature.light.BrightnessLightBehavior;
@@ -34,7 +35,7 @@ public class IncandescentLightModel extends LightModel<BrightnessLightBehavior> 
         final int emissiveLight = this.getLight(light);
         final float cr = 0.23F, cg = 0.18F, cb = 0.14F;
         final float br = this.brightness;
-        this.filament.render(matrix, builder, emissiveLight, overlay, r * (cr * (1.0F - br) + br), g * (cg * (1.0F - br) + br), b * (cb * (1.0F - br) + br), a);
+        RenderUtils.renderPart(this.filament, matrix, builder, emissiveLight, overlay, r * (cr * (1.0F - br) + br), g * (cg * (1.0F - br) + br), b * (cb * (1.0F - br) + br), a);
     }
 
     @Override
@@ -42,7 +43,7 @@ public class IncandescentLightModel extends LightModel<BrightnessLightBehavior> 
         final float bi = this.brightness;
         final int emissiveLight = this.getLight(light);
         final float br = 1.0F, bg = 0.73F, bb = 0.3F;
-        this.bulb.render(matrix, builder, emissiveLight, overlay, r * (br * bi + (1.0F - bi)), g * (bg * bi + (1.0F - bi)), b * (bb * bi + (1.0F - bi)), bi * 0.4F + 0.25F);
+        RenderUtils.renderPart(this.bulb, matrix, builder, emissiveLight, overlay, r * (br * bi + (1.0F - bi)), g * (bg * bi + (1.0F - bi)), b * (bb * bi + (1.0F - bi)), bi * 0.4F + 0.25F);
         super.renderTranslucent(matrix, builder, light, overlay, r, g, b, a);
     }
 

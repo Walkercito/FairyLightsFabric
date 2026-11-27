@@ -6,47 +6,42 @@ public abstract class ForwardingVertexConsumer implements VertexConsumer {
     protected abstract VertexConsumer delegate();
 
     @Override
-    public VertexConsumer vertex(double x, double y, double z) {
-        return this.delegate().vertex(x, y, z);
+    public VertexConsumer addVertex(final float x, final float y, final float z) {
+        return this.delegate().addVertex(x, y, z);
     }
 
     @Override
-    public VertexConsumer color(int r, int g, int b, int a) {
-        return this.delegate().color(r, g, b, a);
+    public VertexConsumer setColor(final int r, final int g, final int b, final int a) {
+        return this.delegate().setColor(r, g, b, a);
     }
 
     @Override
-    public VertexConsumer uv(float u, float v) {
-        return this.delegate().uv(u, v);
+    public VertexConsumer setColor(final int color) {
+        return this.delegate().setColor(color);
     }
 
     @Override
-    public VertexConsumer overlayCoords(int u, int v) {
-        return this.delegate().overlayCoords(u, v);
+    public VertexConsumer setUv(final float u, final float v) {
+        return this.delegate().setUv(u, v);
     }
 
     @Override
-    public VertexConsumer uv2(int u, int v) {
-        return this.delegate().uv2(u, v);
+    public VertexConsumer setUv1(final int u, final int v) {
+        return this.delegate().setUv1(u, v);
     }
 
     @Override
-    public VertexConsumer normal(float x, float y, float z) {
-        return this.delegate().normal(x, y, z);
+    public VertexConsumer setUv2(final int u, final int v) {
+        return this.delegate().setUv2(u, v);
     }
 
     @Override
-    public void endVertex() {
-        this.delegate().endVertex();
+    public VertexConsumer setNormal(final float x, final float y, final float z) {
+        return this.delegate().setNormal(x, y, z);
     }
 
     @Override
-    public void defaultColor(int r, int g, int b, int a) {
-        this.delegate().defaultColor(r, g, b, a);
-    }
-
-    @Override
-    public void unsetDefaultColor() {
-        this.delegate().unsetDefaultColor();
+    public VertexConsumer setLineWidth(final float width) {
+        return this.delegate().setLineWidth(width);
     }
 }

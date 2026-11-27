@@ -105,7 +105,7 @@ public final class GenericRecipeBuilder {
     }
 
     public GenericRecipeBuilder withIngredient(final char key, final ItemStack stack) {
-        return this.withIngredient(key, Ingredient.of(Objects.requireNonNull(stack, "stack")));
+        return this.withIngredient(key, new BasicRegularIngredient(Ingredients.stack(Objects.requireNonNull(stack, "stack")), List.of(stack.copy())));
     }
 
     public GenericRecipeBuilder withIngredient(final char key, final Ingredient ingredient) {
@@ -142,7 +142,7 @@ public final class GenericRecipeBuilder {
     }
 
     public GenericRecipeBuilder withAuxiliaryIngredient(final ItemStack stack, final boolean isRequired, final int limit) {
-        return this.withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(Ingredient.of(Objects.requireNonNull(stack, "stack")), isRequired, limit));
+        return this.withAuxiliaryIngredient(new InertBasicAuxiliaryIngredient(Ingredients.stack(Objects.requireNonNull(stack, "stack")), isRequired, limit, List.of(stack.copy())));
     }
 
     public GenericRecipeBuilder withAuxiliaryIngredient(final TagKey<Item> tag) {
@@ -187,7 +187,7 @@ public final class GenericRecipeBuilder {
                 new AuxiliaryIngredient<?>[0]
         );
 
-        return new GenericRecipe(this.name, this.serializer, this.output, ingredients, auxiliaryIngredients, this.width, this.height, output);
+        return new GenericRecipe(this.serializer, this.output, ingredients, auxiliaryIngredients, this.width, this.height, output);
     }
 
     @SuppressWarnings("unchecked")
@@ -199,7 +199,7 @@ public final class GenericRecipeBuilder {
             return new BasicRegularIngredient(Ingredient.of((Block) object));
         }
         if (object instanceof ItemStack) {
-            return new BasicRegularIngredient(Ingredient.of((ItemStack) object));
+            return new BasicRegularIngredient(Ingredients.stack((ItemStack) object), List.of(((ItemStack) object).copy()));
         }
         if (object instanceof TagKey<?>) {
             return new BasicRegularIngredient(LazyTagIngredient.of((TagKey<Item>) object));

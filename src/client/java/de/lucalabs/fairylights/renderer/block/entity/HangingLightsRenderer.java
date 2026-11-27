@@ -1,6 +1,7 @@
 package de.lucalabs.fairylights.renderer.block.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import de.lucalabs.fairylights.connection.HangingLightsConnection;
 import de.lucalabs.fairylights.feature.light.Light;
@@ -11,7 +12,6 @@ import java.util.function.Function;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.phys.Vec3;
 
 public class HangingLightsRenderer extends ConnectionRenderer<HangingLightsConnection> {
@@ -32,16 +32,15 @@ public class HangingLightsRenderer extends ConnectionRenderer<HangingLightsConne
             final HangingLightsConnection conn,
             final float delta,
             final PoseStack matrix,
-            final MultiBufferSource source,
+            final VertexConsumer buf,
             final int packedLight,
             final int packedOverlay) {
 
-        super.render(conn, delta, matrix, source, packedLight, packedOverlay);
+        super.render(conn, delta, matrix, buf, packedLight, packedOverlay);
         final Light<?>[] lights = conn.getFeatures();
         if (lights == null) {
             return;
         }
-        final LightRenderer.Data data = this.lights.start(source);
         for (int i = 0; i < lights.length; i++) {
             final Light<?> light = lights[i];
             final Vec3 pos = light.getPoint(delta);
@@ -56,7 +55,7 @@ public class HangingLightsRenderer extends ConnectionRenderer<HangingLightsConne
                 matrix.mulPose(Axis.YP.rotation(MathHelper.mod(MathHelper.hash(i) * MathHelper.DEG_TO_RAD, MathHelper.TAU) + MathHelper.PI / 4.0F));
             }
             matrix.translate(0.0D, -light.getDescent(), 0.0D);
-            this.lights.render(matrix, data, light, i, delta, packedLight, packedOverlay);
+            this.lights.render(matrix, light, i, delta, packedLight, packedOverlay, buf);
             matrix.popPose();
         }
     }

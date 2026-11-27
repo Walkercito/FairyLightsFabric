@@ -3,28 +3,13 @@ package de.lucalabs.fairylights.items.crafting;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import java.util.Objects;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 
 public interface GenericIngredient<I extends GenericIngredient<I, M>, M extends GenericRecipe.MatchResult<I, M>> {
-    /**
-     * Provides an immutable list of stacks that will match this ingredient.
-     *
-     * @return Immutable list of potential inputs for this ingredient
-     */
     ImmutableList<ItemStack> getInputs();
 
-    /**
-     * Provides an immutable list of stacks which are required to craft the given output stack.
-     * <p>
-     * Only auxiliary ingredients should provide multiple.
-     * <p>
-     * Must be overriden by implementors which modify the output stack to provide accurate recipes for JEI.
-     *
-     * @return Immutable copy of stacks required to produce output
-     */
     default ImmutableList<ImmutableList<ItemStack>> getInput(final ItemStack output) {
         return ImmutableList.of(this.getInputs());
     }
@@ -35,14 +20,17 @@ public interface GenericIngredient<I extends GenericIngredient<I, M>, M extends 
         return false;
     }
 
-    default void present(final CompoundTag nbt) {}
+    default void present(final ItemStack output) {
+    }
 
-    default void absent(final CompoundTag nbt) {}
+    default void absent(final ItemStack output) {
+    }
 
     default ImmutableList<ItemStack> getMatchingSubtypes(final Ingredient stack) {
         Objects.requireNonNull(stack, "stack");
-        return ImmutableList.copyOf(stack.getItems());
+        return Ingredients.displayStacks(stack);
     }
 
-    default void addTooltip(final List<Component> tooltip) {}
+    default void addTooltip(final List<Component> tooltip) {
+    }
 }

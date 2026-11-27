@@ -7,25 +7,25 @@ import com.google.common.collect.Multimap;
 import com.google.common.math.IntMath;
 import de.lucalabs.fairylights.items.crafting.ingredient.AuxiliaryIngredient;
 import de.lucalabs.fairylights.items.crafting.ingredient.EmptyRegularIngredient;
-import org.jetbrains.annotations.Nullable;
-
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
 import java.util.function.IntUnaryOperator;
 import java.util.function.Supplier;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.inventory.CraftingContainer;
-import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
 
-public final class GenericRecipe extends CustomRecipe {
+public class GenericRecipe extends CustomRecipe {
     public static final EmptyRegularIngredient EMPTY = new EmptyRegularIngredient();
 
     private final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer;
@@ -42,8 +42,30 @@ public final class GenericRecipe extends CustomRecipe {
 
     private final ImmutableList<IntUnaryOperator> xFunctions = ImmutableList.of(IntUnaryOperator.identity(), i -> this.getWidth() - 1 - i);
 
-    GenericRecipe(final Identifier id, final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer, final ItemStack output, final RegularIngredient[] ingredients, final AuxiliaryIngredient<?>[] auxiliaryIngredients, final int width, final int height, final int outputIngredient) {
-        super(id, CraftingBookCategory.MISC);
+    protected GenericRecipe() {
+        this.serializer = () -> null;
+        this.output = ItemStack.EMPTY;
+        this.ingredients = new RegularIngredient[0];
+        this.auxiliaryIngredients = new AuxiliaryIngredient<?>[0];
+        this.width = 0;
+        this.height = 0;
+        this.outputIngredient = -1;
+    }
+
+    public static GenericRecipe lazy(
+            final Supplier<GenericRecipe> factory,
+            final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer) {
+        return new Lazy(factory, serializer);
+    }
+
+    GenericRecipe(
+            final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer,
+            final ItemStack output,
+            final RegularIngredient[] ingredients,
+            final AuxiliaryIngredient<?>[] auxiliaryIngredients,
+            final int width,
+            final int height,
+            final int outputIngredient) {
         Preconditions.checkArgument(width > 0, "width must be greater than zero");
         Preconditions.checkArgument(height > 0, "height must be greater than zero");
         this.serializer = Objects.requireNonNull(serializer, "serializer");
@@ -74,17 +96,14 @@ public final class GenericRecipe extends CustomRecipe {
         return this.room;
     }
 
-    private NonNullList<Ingredient> getDisplayIngredients() {
-        // set regular ingredients according to pattern
-        final NonNullList<Ingredient> ingredients = NonNullList.withSize(9, Ingredient.EMPTY);
+    public NonNullList<Ingredient> getDisplayIngredients() {
+        final NonNullList<Ingredient> ingredients = NonNullList.withSize(9, Ingredients.empty());
         for (int i = 0; i < this.ingredients.length; i++) {
             final int x = i % this.width;
             final int y = i / this.width;
             final ItemStack[] stacks = this.ingredients[i].getInputs().toArray(new ItemStack[0]);
-            ingredients.set(x + y * 3, Ingredient.of(stacks));
+            ingredients.set(x + y * 3, Ingredients.stacks(stacks));
         }
-
-        // fill empty slots with required auxiliary ingredients
         for (int i = 0, slot = 0; slot < ingredients.size(); slot++) {
             final Ingredient ing = ingredients.get(slot);
             if (ing.isEmpty()) {
@@ -92,7 +111,7 @@ public final class GenericRecipe extends CustomRecipe {
                     final AuxiliaryIngredient<?> aux = this.auxiliaryIngredients[i++];
                     if (aux.isRequired()) {
                         final ItemStack[] stacks = aux.getInputs().toArray(new ItemStack[0]);
-                        ingredients.set(slot, Ingredient.of(stacks));
+                        ingredients.set(slot, Ingredients.stacks(stacks));
                         break;
                     }
                 }
@@ -106,8 +125,17 @@ public final class GenericRecipe extends CustomRecipe {
         return this.output.isEmpty();
     }
 
+    public boolean isIgnoredInRecipeBook() {
+        return this.output.isEmpty();
+    }
+
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public CraftingBookCategory category() {
+        return CraftingBookCategory.MISC;
+    }
+
+    @Override
+    public RecipeSerializer<? extends CustomRecipe> getSerializer() {
         return this.serializer.get();
     }
 
@@ -132,32 +160,18 @@ public final class GenericRecipe extends CustomRecipe {
     }
 
     @Override
-    public NonNullList<Ingredient> getIngredients() {
-        return this.getDisplayIngredients();
-    }
-
-    @Override
-    public boolean canCraftInDimensions(final int width, final int height) {
-        return this.width <= width
-                && this.height <= height
-                && (this.getRoom() >= 0 || width * height - this.width * this.height + this.getRoom() >= 0);
-    }
-
-    @Override
-    public boolean matches(final CraftingContainer inventory, @Nullable final Level world) {
-
-        if (!this.canCraftInDimensions(inventory.getWidth(), inventory.getHeight())) {
+    public boolean matches(final CraftingInput inventory, final Level level) {
+        if (!(this.width <= inventory.width()
+                && this.height <= inventory.height()
+                && (this.getRoom() >= 0 || inventory.width() * inventory.height() - this.width * this.height + this.getRoom() >= 0))) {
+            this.result = ItemStack.EMPTY;
             return false;
         }
-        final int scanWidth = inventory.getWidth() + 1 - this.width;
-        final int scanHeight = inventory.getHeight() + 1 - this.height;
-        // iterate over possible origins for recipe (in case it is smaller than the crafting table)
+        final int scanWidth = inventory.width() + 1 - this.width;
+        final int scanHeight = inventory.height() + 1 - this.height;
         for (int i = 0, end = scanWidth * scanHeight; i < end; i++) {
             final int x = i % scanWidth;
             final int y = i / scanWidth;
-
-            // recipes should work when mirrored horizontally. The first function is the identity, the other returns the index
-            // counted from the back
             for (final IntUnaryOperator func : this.xFunctions) {
                 final ItemStack result = this.getResult(inventory, x, y, func);
                 if (!result.isEmpty()) {
@@ -170,16 +184,14 @@ public final class GenericRecipe extends CustomRecipe {
         return false;
     }
 
-
-    private ItemStack getResult(final CraftingContainer inventory, final int originX, final int originY, final IntUnaryOperator funcX) {
+    private ItemStack getResult(final CraftingInput inventory, final int originX, final int originY, final IntUnaryOperator funcX) {
         final MatchResultRegular[] match = new MatchResultRegular[this.ingredients.length];
         final Multimap<AuxiliaryIngredient<?>, MatchResultAuxiliary> auxMatchResults = LinkedListMultimap.create();
         final Map<AuxiliaryIngredient<?>, Integer> auxMatchTotals = new HashMap<>();
         final Set<GenericIngredient<?, ?>> presentCalled = new HashSet<>();
         final List<MatchResultAuxiliary> auxResults = new ArrayList<>();
-        Item item = this.output.getItem();
-        final CompoundTag tag = new CompoundTag();
-        for (int i = 0, w = inventory.getWidth(), size = w * inventory.getHeight(); i < size; i++) {
+        ItemStack outputIngredientStack = null;
+        for (int i = 0, w = inventory.width(), size = w * inventory.height(); i < size; i++) {
             final int x = i % w;
             final int y = i / w;
             final int ingX = x - originX;
@@ -193,19 +205,8 @@ public final class GenericRecipe extends CustomRecipe {
                     return ItemStack.EMPTY;
                 }
                 match[index] = result;
-                result.forMatch(presentCalled, tag);
                 if (index == this.outputIngredient) {
-                    final CompoundTag inputTag = input.getTag();
-                    if (inputTag != null) {
-                        if (tag.isEmpty()) {
-                            tag.merge(inputTag);
-                        } else {
-                            final CompoundTag temp = inputTag.copy();
-                            temp.merge(tag);
-                            tag.merge(temp);
-                        }
-                    }
-                    item = input.getItem();
+                    outputIngredientStack = input.copyWithCount(1);
                 }
             } else if (!EMPTY.matches(input).doesMatch()) {
                 boolean nonAuxiliary = true;
@@ -215,7 +216,6 @@ public final class GenericRecipe extends CustomRecipe {
                         if (result.isAtLimit(auxMatchTotals.getOrDefault(result.ingredient, 0))) {
                             return ItemStack.EMPTY;
                         }
-                        result.forMatch(presentCalled, tag);
                         auxMatchTotals.merge(result.ingredient, 1, IntMath::checkedAdd);
                         nonAuxiliary = false;
                         result.propagate(auxMatchResults);
@@ -227,21 +227,29 @@ public final class GenericRecipe extends CustomRecipe {
                 }
             }
         }
-        final Set<GenericIngredient<?, ?>> absentCalled = new HashSet<>();
+        final ItemStack output = this.output.isEmpty()
+                ? (outputIngredientStack == null ? ItemStack.EMPTY : outputIngredientStack)
+                : this.output.copy();
+        if (output.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
         for (final MatchResultRegular result : match) {
-            result.notifyAbsence(presentCalled, absentCalled, tag);
+            result.forMatch(presentCalled, output);
         }
         for (final MatchResultAuxiliary result : auxResults) {
-            result.notifyAbsence(presentCalled, absentCalled, tag);
+            result.forMatch(presentCalled, output);
+        }
+        final Set<GenericIngredient<?, ?>> absentCalled = new HashSet<>();
+        for (final MatchResultRegular result : match) {
+            result.notifyAbsence(presentCalled, absentCalled, output);
+        }
+        for (final MatchResultAuxiliary result : auxResults) {
+            result.notifyAbsence(presentCalled, absentCalled, output);
         }
         for (final AuxiliaryIngredient<?> ingredient : this.auxiliaryIngredients) {
-            if (ingredient.process(auxMatchResults, tag)) {
+            if (ingredient.process(auxMatchResults, output)) {
                 return ItemStack.EMPTY;
             }
-        }
-        final ItemStack output = this.output.isEmpty() ? new ItemStack(item) : this.output.copy();
-        if (!tag.isEmpty()) {
-            output.setTag(tag);
         }
         return output;
     }
@@ -251,7 +259,7 @@ public final class GenericRecipe extends CustomRecipe {
     }
 
     @Override
-    public ItemStack craft(final CraftingContainer inventory, final RegistryAccess registryAccess) {
+    public ItemStack assemble(final CraftingInput inventory) {
         final ItemStack result = this.result;
         return result.isEmpty() ? result : result.copy();
     }
@@ -263,20 +271,17 @@ public final class GenericRecipe extends CustomRecipe {
 
         boolean doesMatch();
 
-        void forMatch(final Set<GenericIngredient<?, ?>> called, final CompoundTag nbt);
+        void forMatch(Set<GenericIngredient<?, ?>> called, ItemStack output);
 
-        void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final CompoundTag nbt);
+        void notifyAbsence(Set<GenericIngredient<?, ?>> presentCalled, Set<GenericIngredient<?, ?>> absentCalled, ItemStack output);
 
-        M withParent(final M parent);
+        M withParent(M parent);
     }
 
     public static class MatchResultRegular implements MatchResult<RegularIngredient, MatchResultRegular> {
         protected final RegularIngredient ingredient;
-
         protected final ItemStack input;
-
         protected final boolean doesMatch;
-
         protected final ImmutableList<MatchResultRegular> supplementaryResults;
 
         public MatchResultRegular(final RegularIngredient ingredient, final ItemStack input, final boolean doesMatch, final List<MatchResultRegular> supplementaryResults) {
@@ -302,21 +307,21 @@ public final class GenericRecipe extends CustomRecipe {
         }
 
         @Override
-        public void forMatch(final Set<GenericIngredient<?, ?>> called, final CompoundTag nbt) {
-            this.ingredient.matched(this.input, nbt);
+        public void forMatch(final Set<GenericIngredient<?, ?>> called, final ItemStack output) {
+            this.ingredient.matched(this.input, output);
             if (called.add(this.ingredient)) {
-                this.ingredient.present(nbt);
+                this.ingredient.present(output);
             }
         }
 
         @Override
-        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final CompoundTag nbt) {
+        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final ItemStack output) {
             if (!presentCalled.contains(this.ingredient) && !absentCalled.contains(this.ingredient)) {
-                this.ingredient.absent(nbt);
+                this.ingredient.absent(output);
                 absentCalled.add(this.ingredient);
             }
             for (final MatchResultRegular result : this.supplementaryResults) {
-                result.notifyAbsence(presentCalled, absentCalled, nbt);
+                result.notifyAbsence(presentCalled, absentCalled, output);
             }
         }
 
@@ -335,15 +340,15 @@ public final class GenericRecipe extends CustomRecipe {
         }
 
         @Override
-        public void forMatch(final Set<GenericIngredient<?, ?>> called, final CompoundTag nbt) {
-            super.forMatch(called, nbt);
-            this.parent.forMatch(called, nbt);
+        public void forMatch(final Set<GenericIngredient<?, ?>> called, final ItemStack output) {
+            super.forMatch(called, output);
+            this.parent.forMatch(called, output);
         }
 
         @Override
-        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final CompoundTag nbt) {
-            super.notifyAbsence(presentCalled, absentCalled, nbt);
-            this.parent.notifyAbsence(presentCalled, absentCalled, nbt);
+        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final ItemStack output) {
+            super.notifyAbsence(presentCalled, absentCalled, output);
+            this.parent.notifyAbsence(presentCalled, absentCalled, output);
         }
 
         @Override
@@ -354,11 +359,8 @@ public final class GenericRecipe extends CustomRecipe {
 
     public static class MatchResultAuxiliary implements MatchResult<AuxiliaryIngredient<?>, MatchResultAuxiliary> {
         protected final AuxiliaryIngredient<?> ingredient;
-
         protected final ItemStack input;
-
         protected final boolean doesMatch;
-
         protected final ImmutableList<MatchResultAuxiliary> supplementaryResults;
 
         public MatchResultAuxiliary(final AuxiliaryIngredient<?> ingredient, final ItemStack input, final boolean doesMatch, final List<MatchResultAuxiliary> supplementaryResults) {
@@ -384,21 +386,20 @@ public final class GenericRecipe extends CustomRecipe {
         }
 
         @Override
-        public void forMatch(final Set<GenericIngredient<?, ?>> called, final CompoundTag nbt) {
-            if (!called.contains(this.ingredient)) {
-                this.ingredient.present(nbt);
-                called.add(this.ingredient);
+        public void forMatch(final Set<GenericIngredient<?, ?>> called, final ItemStack output) {
+            if (this.doesMatch && called.add(this.ingredient)) {
+                this.ingredient.present(output);
             }
         }
 
         @Override
-        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final CompoundTag nbt) {
+        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final ItemStack output) {
             if (!presentCalled.contains(this.ingredient) && !absentCalled.contains(this.ingredient)) {
-                this.ingredient.absent(nbt);
+                this.ingredient.absent(output);
                 absentCalled.add(this.ingredient);
             }
             for (final MatchResultAuxiliary result : this.supplementaryResults) {
-                result.notifyAbsence(presentCalled, absentCalled, nbt);
+                result.notifyAbsence(presentCalled, absentCalled, output);
             }
         }
 
@@ -425,15 +426,15 @@ public final class GenericRecipe extends CustomRecipe {
         }
 
         @Override
-        public void forMatch(final Set<GenericIngredient<?, ?>> called, final CompoundTag nbt) {
-            super.forMatch(called, nbt);
-            this.parent.forMatch(called, nbt);
+        public void forMatch(final Set<GenericIngredient<?, ?>> called, final ItemStack output) {
+            super.forMatch(called, output);
+            this.parent.forMatch(called, output);
         }
 
         @Override
-        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final CompoundTag nbt) {
-            super.notifyAbsence(presentCalled, absentCalled, nbt);
-            this.parent.notifyAbsence(presentCalled, absentCalled, nbt);
+        public void notifyAbsence(final Set<GenericIngredient<?, ?>> presentCalled, final Set<GenericIngredient<?, ?>> absentCalled, final ItemStack output) {
+            super.notifyAbsence(presentCalled, absentCalled, output);
+            this.parent.notifyAbsence(presentCalled, absentCalled, output);
         }
 
         @Override
@@ -479,5 +480,80 @@ public final class GenericRecipe extends CustomRecipe {
             }
         }
         return foundDictator;
+    }
+
+    private static final class Lazy extends GenericRecipe {
+        private final Supplier<GenericRecipe> factory;
+        private final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer;
+        private GenericRecipe delegate;
+
+        private Lazy(
+                final Supplier<GenericRecipe> factory,
+                final Supplier<? extends RecipeSerializer<GenericRecipe>> serializer) {
+            this.factory = factory;
+            this.serializer = serializer;
+        }
+
+        private GenericRecipe delegate() {
+            if (this.delegate == null) {
+                this.delegate = this.factory.get();
+            }
+            return this.delegate;
+        }
+
+        @Override
+        public boolean isSpecial() {
+            return true;
+        }
+
+        @Override
+        public boolean isIgnoredInRecipeBook() {
+            return true;
+        }
+
+        @Override
+        public RecipeSerializer<? extends CustomRecipe> getSerializer() {
+            return this.serializer.get();
+        }
+
+        @Override
+        public ItemStack getOutput() {
+            return this.delegate().getOutput();
+        }
+
+        @Override
+        public RegularIngredient[] getGenericIngredients() {
+            return this.delegate().getGenericIngredients();
+        }
+
+        @Override
+        public AuxiliaryIngredient<?>[] getAuxiliaryIngredients() {
+            return this.delegate().getAuxiliaryIngredients();
+        }
+
+        @Override
+        public int getWidth() {
+            return this.delegate().getWidth();
+        }
+
+        @Override
+        public int getHeight() {
+            return this.delegate().getHeight();
+        }
+
+        @Override
+        public NonNullList<Ingredient> getDisplayIngredients() {
+            return this.delegate().getDisplayIngredients();
+        }
+
+        @Override
+        public boolean matches(final CraftingInput inventory, final Level level) {
+            return this.delegate().matches(inventory, level);
+        }
+
+        @Override
+        public ItemStack assemble(final CraftingInput inventory) {
+            return this.delegate().assemble(inventory);
+        }
     }
 }

@@ -2,30 +2,23 @@ package de.lucalabs.fairylights;
 
 import de.lucalabs.fairylights.blocks.entity.FairyLightBlockEntities;
 import de.lucalabs.fairylights.entity.FairyLightEntities;
-import de.lucalabs.fairylights.fastener.RegularBlockView;
-import de.lucalabs.fairylights.items.ItemColorManager;
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import de.lucalabs.fairylights.model.light.*;
 import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
 import de.lucalabs.fairylights.renderer.block.entity.*;
 import de.lucalabs.fairylights.renderer.entity.FenceFastenerRenderer;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
+import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
 public class FairyLightsClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        BlockEntityRenderers.register(
-                FairyLightBlockEntities.FASTENER,
-                context -> new FastenerBlockEntityRenderer(context, new RegularBlockView()));
-
-        BlockEntityRenderers.register(
-                FairyLightBlockEntities.LIGHT,
-                LightBlockEntityRenderer::new
-        );
+        BlockEntityRenderers.register(FairyLightBlockEntities.FASTENER, FastenerBlockEntityRenderer::new);
+        BlockEntityRenderers.register(FairyLightBlockEntities.LIGHT, LightBlockEntityRenderer::new);
 
         EntityRendererRegistry.register(FairyLightEntities.FASTENER, FenceFastenerRenderer::new);
 
@@ -59,14 +52,6 @@ public class FairyLightsClient implements ClientModInitializer {
         ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PENNANT_WIRE, PennantBuntingRenderer::wireLayer);
         ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.LIGHTS_WIRE, HangingLightsRenderer::wireLayer);
 
-        ModelLoadingRegistry.INSTANCE.registerModelProvider((manager, out) -> {
-            // Tell Fabric to load this model during resource reloading
-            out.accept(FenceFastenerRenderer.MODEL);
-            PennantBuntingRenderer.MODELS.forEach(out);
-        });
-
-
-        ItemColorManager.setupColors();
+        ClientTickEvents.END_CLIENT_TICK.register(client -> de.lucalabs.fairylights.events.ClientEventHandler.updateHitConnection());
     }
-
 }

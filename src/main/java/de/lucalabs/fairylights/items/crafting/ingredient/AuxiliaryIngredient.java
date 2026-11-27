@@ -4,13 +4,11 @@ import com.google.common.collect.Multimap;
 import de.lucalabs.fairylights.items.crafting.GenericIngredient;
 import de.lucalabs.fairylights.items.crafting.GenericRecipe;
 import de.lucalabs.fairylights.util.Utils;
-import org.jetbrains.annotations.Nullable;
-
 import java.util.Collection;
 import java.util.List;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> {
     boolean isRequired();
@@ -22,9 +20,9 @@ public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngre
 
     void consume(A accumulator, ItemStack ingredient);
 
-    boolean finish(A accumulator, CompoundTag nbt);
+    boolean finish(A accumulator, ItemStack output);
 
-    default boolean process(final Multimap<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> map, final CompoundTag nbt) {
+    default boolean process(final Multimap<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> map, final ItemStack output) {
         final Collection<GenericRecipe.MatchResultAuxiliary> results = map.get(this);
         if (results.isEmpty() && this.isRequired()) {
             return true;
@@ -33,7 +31,7 @@ public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngre
         for (final GenericRecipe.MatchResultAuxiliary result : results) {
             this.consume(ax, result.getInput());
         }
-        return this.finish(ax, nbt);
+        return this.finish(ax, output);
     }
 
     @Override

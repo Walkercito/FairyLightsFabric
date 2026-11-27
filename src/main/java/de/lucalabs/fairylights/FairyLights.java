@@ -15,6 +15,7 @@ import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.string.StringTypes;
 import de.lucalabs.fairylights.util.Tags;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import org.apache.logging.log4j.core.jmx.Server;
 import org.slf4j.Logger;
@@ -44,6 +45,8 @@ public class FairyLights implements ModInitializer {
         ConnectionTypes.initialize();
         StringTypes.initialize();
 
-        ServerPlayNetworking.registerGlobalReceiver(InteractionConnectionMessage.ID, InteractionConnectionMessage::apply);
+        PayloadTypeRegistry.serverboundPlay().register(InteractionConnectionMessage.TYPE, InteractionConnectionMessage.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(InteractionConnectionMessage.TYPE,
+                (payload, context) -> InteractionConnectionMessage.apply(payload, context.player(), context.server()));
     }
 }

@@ -1,6 +1,7 @@
 package de.lucalabs.fairylights.items;
 
-import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.component.DyedItemColor;
 import java.util.Arrays;
 import java.util.Optional;
 import net.minecraft.network.chat.Component;
@@ -61,11 +62,11 @@ public final class DyeableItem {
     }
 
     public static ItemStack setColor(final ItemStack stack, final int color) {
-        stack.set(FairyLightItemComponents.COLOR, color);
+        stack.set(DataComponents.DYED_COLOR, new DyedItemColor(color));
         return stack;
     }
 
     public static int getColor(final ItemStack stack) {
-        return stack.getOrDefault(FairyLightItemComponents.COLOR, 0xFFFFFFFF);
+        return DyedItemColor.getOrDefault(stack, 0xFFFFFFFF);
     }
 }

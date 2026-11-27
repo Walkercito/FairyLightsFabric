@@ -1,8 +1,6 @@
 package de.lucalabs.fairylights.events;
 
 import com.google.common.collect.Sets;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.collision.Collidable;
 import de.lucalabs.fairylights.collision.Intersection;
 import de.lucalabs.fairylights.components.FairyLightComponents;
@@ -13,136 +11,32 @@ import de.lucalabs.fairylights.entity.FenceFastenerEntity;
 import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.fastener.FastenerType;
 import de.lucalabs.fairylights.net.serverbound.InteractionConnectionMessage;
-import de.lucalabs.fairylights.renderer.RenderConstants;
-import de.lucalabs.fairylights.util.Curve;
-import org.ladysnake.cca.api.v3.component.ComponentAccess;
+import java.util.ConcurrentModificationException;
+import java.util.Set;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.*;
-import net.minecraft.client.renderer.LevelRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientGamePacketListener;
-import net.minecraft.util.Mth;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.chunk.ChunkSource;
 import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
-import org.joml.Vector3f;
-
-import java.util.ConcurrentModificationException;
-import java.util.Set;
+import org.ladysnake.cca.api.v3.component.ComponentAccess;
 
 public final class ClientEventHandler {
     private ClientEventHandler() {
-    }
-
-    public static void onDrawEntityHighlight(
-            final Entity entity,
-            final Camera camera,
-            final float tickDelta,
-            final PoseStack matrix,
-            final MultiBufferSource buf) {
-
-        Vec3 pos = camera.getPosition();
-
-        if (entity instanceof FenceFastenerEntity) {
-            drawFenceFastenerHighlight(
-                    (FenceFastenerEntity) entity,
-                    matrix,
-                    buf.getBuffer(RenderType.lines()),
-                    tickDelta,
-                    pos.x,
-                    pos.y,
-                    pos.z);
-        } else if (entity instanceof final HitConnection hit) {
-            if (hit.result.intersection.featureType() == Connection.CORD_FEATURE) {
-                matrix.pushPose();
-                final Vec3 p = hit.result.connection.getFastener().getConnectionPoint();
-                matrix.translate(p.x - pos.x, p.y - pos.y, p.z - pos.z);
-                renderHighlight(hit.result.connection, matrix, buf.getBuffer(RenderType.lines()));
-                matrix.popPose();
-            } else {
-                final AABB bb = hit.result.intersection.hitBox().offset(-pos.x, -pos.y, -pos.z).expand(0.002D);
-                LevelRenderer.renderLineBox(
-                        matrix,
-                        buf.getBuffer(RenderType.lines()),
-                        bb,
-                        0.0F,
-                        0.0F,
-                        0.0F,
-                        RenderConstants.HIGHLIGHT_ALPHA);
-            }
-        }
-    }
-
-    private static void drawFenceFastenerHighlight(
-            final FenceFastenerEntity fence,
-            final PoseStack matrix,
-            final VertexConsumer buf,
-            final float delta,
-            final double dx,
-            final double dy,
-            final double dz) {
-
-
-        final Player player = Minecraft.getInstance().player;
-        // Check if the server will allow interaction
-        if (player != null && (player.hasLineOfSight(fence) || player.distanceToSqr(fence) <= 9.0D)) {
-            final AABB selection = fence.getBoundingBox().offset(-dx, -dy, -dz).expand(0.002D);
-            LevelRenderer.renderLineBox(matrix, buf, selection, 0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA);
-        }
-    }
-
-    private static void renderHighlight(final Connection connection, final PoseStack matrix, final VertexConsumer buf) {
-        final Curve cat = connection.getCatenary();
-        if (cat == null) {
-            return;
-        }
-        final Vector3f p = new Vector3f();
-        final Vector3f v1 = new Vector3f();
-        final Vector3f v2 = new Vector3f();
-        final LineBuilder builder = new LineBuilder(matrix, buf);
-        final float r = connection.getRadius() + 0.01F;
-        for (int edge = 0; edge < 4; edge++) {
-            p.set(cat.getX(0), cat.getY(0), cat.getZ(0));
-            v1.set(cat.getDx(0), cat.getDy(0), cat.getDz(0));
-            v1.normalize();
-            v2.set(-v1.x(), -v1.y(), -v1.z());
-            for (int n = 0; edge == 0 && n < 8; n++) {
-                addVertex(builder, (n + 1) / 2 % 4, p, v1, v2, r);
-            }
-            addVertex(builder, edge, p, v1, v2, r);
-            for (int i = 1; i < cat.getCount() - 1; i++) {
-                p.set(cat.getX(i), cat.getY(i), cat.getZ(i));
-                v2.set(-cat.getDx(i), -cat.getDy(i), -cat.getDz(i));
-                v2.normalize();
-                addVertex(builder, edge, p, v1, v2, r);
-                addVertex(builder, edge, p, v1, v2, r);
-                v1.set(-v2.x(), -v2.y(), -v2.z());
-            }
-            p.set(cat.getX(), cat.getY(), cat.getZ());
-            v2.set(-v1.x(), -v1.y(), -v1.z());
-            addVertex(builder, edge, p, v1, v2, r);
-            for (int n = 0; edge == 0 && n < 8; n++) {
-                addVertex(builder, (n + 1) / 2 % 4, p, v1, v2, r);
-            }
-        }
     }
 
     @Nullable
@@ -150,8 +44,8 @@ public final class ClientEventHandler {
         final net.minecraft.world.phys.HitResult result = Minecraft.getInstance().hitResult;
         if (result instanceof EntityHitResult) {
             final Entity entity = ((EntityHitResult) result).getEntity();
-            if (entity instanceof HitConnection) {
-                return ((HitConnection) entity).result.connection;
+            if (entity instanceof HitConnection hitConnection) {
+                return hitConnection.result.connection;
             }
         }
         return null;
@@ -169,9 +63,10 @@ public final class ClientEventHandler {
         if (fasteners.isEmpty()) {
             return null;
         }
-        final Vec3 origin = viewer.getEyePosition(1);
+        final Vec3 origin = viewer.getEyePosition(1.0F);
         final Vec3 look = viewer.getLookAngle();
-        final double reach = Minecraft.getInstance().gameMode.getPickRange();
+        final Player player = Minecraft.getInstance().player;
+        final double reach = player != null ? player.entityInteractionRange() : 6.0D;
         final Vec3 end = origin.add(look.x * reach, look.y * reach, look.z * reach);
         Connection found = null;
         Intersection rayTrace = null;
@@ -217,22 +112,21 @@ public final class ClientEventHandler {
     private static Set<Fastener<?>> collectFasteners(final Level world, final AABB bounds) {
         final Set<Fastener<?>> fasteners = Sets.newLinkedHashSet();
         world.getEntitiesOfClass(FenceFastenerEntity.class, bounds)
-                .forEach(e -> collectFastenersAttachedToEntity(e, bounds, fasteners));
-        final int minX = Mth.floor(bounds.minX / 16.0D);
-        final int maxX = Mth.ceil(bounds.maxX / 16.0D);
-        final int minZ = Mth.floor(bounds.minZ / 16.0D);
-        final int maxZ = Mth.ceil(bounds.maxZ / 16.0D);
+                .forEach(entity -> collectFastenersAttachedToEntity(entity, bounds, fasteners));
+        final int minX = MthFloor(bounds.minX / 16.0D);
+        final int maxX = MthCeil(bounds.maxX / 16.0D);
+        final int minZ = MthFloor(bounds.minZ / 16.0D);
+        final int maxZ = MthCeil(bounds.maxZ / 16.0D);
         final ChunkSource provider = world.getChunkSource();
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
                 final LevelChunk chunk = provider.getChunk(x, z, false);
                 if (chunk != null) {
                     try {
-                        for (final BlockEntity e : chunk.getBlockEntities().values()) {
-                            collectFastenersAttachedToEntity(e, bounds, fasteners);
+                        for (final BlockEntity entity : chunk.getBlockEntities().values()) {
+                            collectFastenersAttachedToEntity(entity, bounds, fasteners);
                         }
-                    } catch (final ConcurrentModificationException e) {
-                        // RenderChunk's may find an invalid block entity while building and trigger a remove not on main thread
+                    } catch (final ConcurrentModificationException ignored) {
                     }
                 }
             }
@@ -240,80 +134,26 @@ public final class ClientEventHandler {
         return fasteners;
     }
 
-    private static void collectFastenersAttachedToEntity(final ComponentAccess e, final AABB bounds, Set<Fastener<?>> fasteners) {
-        FairyLightComponents.FASTENER.maybeGet(e).flatMap(GenericComponent::get).ifPresent(f -> {
-            if (bounds.contains(f.getConnectionPoint())) {
-                fasteners.add(f);
+    private static int MthFloor(final double value) {
+        return (int) Math.floor(value);
+    }
+
+    private static int MthCeil(final double value) {
+        return (int) Math.ceil(value);
+    }
+
+    private static void collectFastenersAttachedToEntity(final ComponentAccess entity, final AABB bounds, final Set<Fastener<?>> fasteners) {
+        FairyLightComponents.FASTENER.maybeGet(entity).flatMap(GenericComponent::get).ifPresent(fastener -> {
+            if (bounds.contains(fastener.getConnectionPoint())) {
+                fasteners.add(fastener);
             }
         });
     }
 
-    private static void addVertex(final LineBuilder builder, final int edge, final Vector3f p, final Vector3f v1, final Vector3f v2, final float r) {
-        builder.accept(get(edge, p, v1, v2, r));
-    }
-
-    private static Vector3f get(final int edge, final Vector3f p, final Vector3f v1, final Vector3f v2, final float r) {
-        final Vector3f up = new Vector3f();
-        final Vector3f side = new Vector3f();
-        // if collinear
-        if (v1.dot(v2) < -(1.0F - 1.0e-2F)) {
-            final float h = Mth.sqrt(v1.x() * v1.x() + v1.z() * v1.z());
-            // if vertical
-            if (h < 1.0e-2F) {
-                up.set(-1.0F, 0.0F, 0.0F);
-            } else {
-                up.set(-v1.x() / h * -v1.y(), -h, -v1.z() / h * -v1.y());
-            }
-        } else {
-            up.set(v2.x(), v2.y(), v2.z());
-            up.lerp(v1, 0.5F);
-        }
-        up.normalize();
-        side.set(v1.x(), v1.y(), v1.z());
-        side.cross(up);
-        side.normalize();
-        side.mul(edge == 0 || edge == 3 ? -r : r);
-        up.mul(edge < 2 ? -r : r);
-        up.add(side);
-        up.add(p);
-        return up;
-    }
-
-    static class LineBuilder {
-        final PoseStack matrix;
-        final VertexConsumer buf;
-        Vector3f last;
-
-        LineBuilder(PoseStack matrix, VertexConsumer buf) {
-            this.matrix = matrix;
-            this.buf = buf;
-        }
-
-        void accept(Vector3f pos) {
-            if (this.last == null) {
-                this.last = pos;
-            } else {
-                Vector3f n = new Vector3f(pos);
-                n.sub(this.last);
-                n.normalize();
-                n = this.matrix.last().normal().transform(n);
-                this.buf.vertex(this.matrix.last().pose(), this.last.x(), this.last.y(), this.last.z())
-                        .color(0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA)
-                        .normal(n.x(), n.y(), n.z())
-                        .endVertex();
-                this.buf.vertex(this.matrix.last().pose(), pos.x(), pos.y(), pos.z())
-                        .color(0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA)
-                        .normal(n.x(), n.y(), n.z())
-                        .endVertex();
-                this.last = null;
-            }
-        }
-    }
-
     static class HitConnection extends Entity {
-        final ClientEventHandler.HitResult result;
+        final HitResult result;
 
-        HitConnection(final Level world, final ClientEventHandler.HitResult result) {
+        HitConnection(final Level world, final HitResult result) {
             super(EntityType.ITEM, world);
             this.setId(-1);
             this.result = result;
@@ -321,7 +161,24 @@ public final class ClientEventHandler {
         }
 
         @Override
-        public boolean hurt(final DamageSource source, final float amount) {
+        protected void defineSynchedData(final SynchedEntityData.Builder builder) {
+        }
+
+        @Override
+        public boolean hurtServer(final ServerLevel level, final DamageSource source, final float amount) {
+            return false;
+        }
+
+        @Override
+        protected void readAdditionalSaveData(final ValueInput input) {
+        }
+
+        @Override
+        protected void addAdditionalSaveData(final ValueOutput output) {
+        }
+
+        @Override
+        public boolean hurtClient(final DamageSource source) {
             if (source.getEntity() == Minecraft.getInstance().player) {
                 this.processAction(PlayerAction.ATTACK);
                 return true;
@@ -330,56 +187,17 @@ public final class ClientEventHandler {
         }
 
         @Override
-        public InteractionResult interact(final Player player, final InteractionHand hand) {
+        public InteractionResult interact(final Player player, final InteractionHand hand, final Vec3 hit) {
             if (player == Minecraft.getInstance().player) {
                 this.processAction(PlayerAction.INTERACT);
                 return InteractionResult.SUCCESS;
             }
-            return super.interact(player, hand);
+            return super.interact(player, hand, hit);
         }
 
         private void processAction(final PlayerAction action) {
             ClientPlayNetworking.send(
-                    InteractionConnectionMessage.ID,
-                    new InteractionConnectionMessage(this.result.connection, action, this.result.intersection));
-        }
-
-//        @Override
-//        public ItemStack getPickedResult(net.minecraft.util.hit.HitResult target) {
-//            return this.result.connection.getItemStack();
-//        }
-
-        // TODO check if that does the same as the method above
-        @Override
-        public ItemStack getPickResult() {
-            return this.result.connection.getItemStack();
-        }
-
-        @Override
-        protected void defineSynchedData() {
-        }
-
-        @Override
-        protected void addAdditionalSaveData(final CompoundTag compound) {
-        }
-
-        @Override
-        protected void readAdditionalSaveData(final CompoundTag compound) {
-        }
-
-        @Override
-        public Packet<ClientGamePacketListener> getAddEntityPacket() {
-            return new Packet<>() {
-                @Override
-                public void write(final FriendlyByteBuf buf) {
-
-                }
-
-                @Override
-                public void apply(final ClientGamePacketListener p_131342_) {
-
-                }
-            };
+                    InteractionConnectionMessage.create(this.result.connection, action, this.result.intersection));
         }
     }
 

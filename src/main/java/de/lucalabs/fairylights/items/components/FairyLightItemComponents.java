@@ -16,14 +16,6 @@ import net.minecraft.world.item.ItemStack;
 
 public final class FairyLightItemComponents {
 
-    public static final DataComponentType<Integer> COLOR = register(
-            "color",
-            DataComponentType.<Integer>builder()
-                    .persistent(Codec.INT)
-                    .networkSynchronized(ByteBufCodecs.VAR_INT)
-                    .build()
-    );
-
     public static final DataComponentType<List<Integer>> COLORS = register(
             "colors",
             DataComponentType.<List<Integer>>builder()

@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:gold_nugget",
+    "I": "minecraft:iron_ingot",
+    "T": "minecraft:torch"
+  },
+  "pattern": [
+    " I ",
+    "GTG",
+    "IGI"
+  ],
+  "result": {
+    "count": 4,
+    "id": "fairylights:candle_lantern"
+  }
+}

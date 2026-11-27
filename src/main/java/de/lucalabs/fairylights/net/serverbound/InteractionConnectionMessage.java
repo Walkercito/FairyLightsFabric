@@ -4,76 +4,86 @@ import de.lucalabs.fairylights.FairyLights;
 import de.lucalabs.fairylights.collision.Intersection;
 import de.lucalabs.fairylights.connection.Connection;
 import de.lucalabs.fairylights.connection.PlayerAction;
+import de.lucalabs.fairylights.fastener.Fastener;
+import de.lucalabs.fairylights.fastener.accessor.FastenerAccessor;
 import de.lucalabs.fairylights.feature.FeatureType;
 import de.lucalabs.fairylights.net.ConnectionMessage;
 import de.lucalabs.fairylights.util.Utils;
-import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.minecraft.network.FriendlyByteBuf;
+import java.util.UUID;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 
-public class InteractionConnectionMessage extends ConnectionMessage {
+public final class InteractionConnectionMessage {
 
-    public static final Identifier ID = Identifier.fromNamespaceAndPath(FairyLights.ID, "interaction_connection");
+    public static final CustomPacketPayload.Type<Payload> TYPE =
+            new CustomPacketPayload.Type<>(Identifier.fromNamespaceAndPath(FairyLights.ID, "interaction_connection"));
+
+    public static final StreamCodec<RegistryFriendlyByteBuf, Payload> CODEC =
+            StreamCodec.composite(ByteBufCodecs.TRUSTED_COMPOUND_TAG, Payload::data, Payload::new);
 
     private static final float RANGE = (Connection.MAX_LENGTH + 1) * (Connection.MAX_LENGTH + 1);
     private static final float REACH = 6 * 6;
 
-    public InteractionConnectionMessage(
-            final Connection connection,
-            final PlayerAction type,
-            final Intersection intersection) {
-        super(connection);
-
-        Vec3 hit = intersection.result();
-
-        writeByte(type.ordinal());
-        writeDouble(hit.x);
-        writeDouble(hit.y);
-        writeDouble(hit.z);
-        writeVarInt(intersection.featureType().getId());
-        writeVarInt(intersection.feature().getId());
+    private InteractionConnectionMessage() {
     }
 
-    public static void apply(
-            MinecraftServer server,
-            ServerPlayer player,
-            ServerGamePacketListenerImpl handler,
-            FriendlyByteBuf buf,
-            PacketSender responseSender) {
-        ParsedData baseData = parse(buf);
+    public record Payload(CompoundTag data) implements CustomPacketPayload {
+        @Override
+        public CustomPacketPayload.Type<? extends CustomPacketPayload> type() {
+            return TYPE;
+        }
+    }
 
-        short type = buf.readUnsignedByte();
-        PlayerAction action = Utils.getEnumValue(PlayerAction.class, type);
+    public static Payload create(final Connection connection, final PlayerAction action, final Intersection intersection) {
+        final Fastener<?> fastener = connection.getFastener();
+        final Vec3 hit = intersection.result();
+        final CompoundTag data = new CompoundTag();
+        data.putLong("pos", fastener.getPos().asLong());
+        data.put("fastener", ConnectionMessage.serializeAccessor(fastener.createAccessor()));
+        data.putString("uuid", connection.getUUID().toString());
+        data.putInt("action", action.ordinal());
+        data.putDouble("hitX", hit.x);
+        data.putDouble("hitY", hit.y);
+        data.putDouble("hitZ", hit.z);
+        data.putInt("featureType", intersection.featureType().getId());
+        data.putInt("featureId", intersection.feature().getId());
+        return new Payload(data);
+    }
 
-        double hitX = buf.readDouble();
-        double hitY = buf.readDouble();
-        double hitZ = buf.readDouble();
-        Vec3 hit = new Vec3(hitX, hitY, hitZ);
-
-        FeatureType featureType = FeatureType.fromId(buf.readVarInt());
-        int featureId = buf.readVarInt();
-
-        server.execute(() -> {
-            getConnection(baseData.accessor(), baseData.id(), c -> true, player.level()).ifPresent(connection -> {
-                if (connection.isModifiable(player) &&
-                        player.distanceToSqr(Vec3.atLowerCornerOf(connection.getFastener().getPos())) < RANGE &&
-                        player.distanceToSqr(hitX, hitY, hitZ) < REACH
-                ) {
-                    if (action == PlayerAction.ATTACK) {
-                        connection.disconnect(player, hit);
-                    } else {
-                        interact(player, connection, featureType, featureId, hit);
-                    }
+    public static void apply(final Payload payload, final ServerPlayer player, final MinecraftServer server) {
+        final CompoundTag data = payload.data();
+        final CompoundTag fastenerTag = data.getCompoundOrEmpty("fastener");
+        final FastenerAccessor accessor = ConnectionMessage.deserializeAccessor(fastenerTag);
+        final UUID id = UUID.fromString(data.getStringOr("uuid", ""));
+        final PlayerAction action = Utils.getEnumValue(PlayerAction.class, data.getIntOr("action", 0));
+        final Vec3 hit = new Vec3(
+                data.getDoubleOr("hitX", 0.0D),
+                data.getDoubleOr("hitY", 0.0D),
+                data.getDoubleOr("hitZ", 0.0D));
+        final FeatureType featureType = FeatureType.fromId(data.getIntOr("featureType", 0));
+        final int featureId = data.getIntOr("featureId", 0);
+        server.execute(() -> ConnectionMessage.getConnection(accessor, id, c -> true, player.level()).ifPresent(connection -> {
+            if (connection.isModifiable(player)
+                    && player.distanceToSqr(Vec3.atLowerCornerOf(connection.getFastener().getPos())) < RANGE
+                    && player.distanceToSqr(hit) < REACH) {
+                if (action == PlayerAction.ATTACK) {
+                    connection.disconnect(player, hit);
+                } else {
+                    interact(player, connection, featureType, featureId, hit);
                 }
-            });
-        });
+            }
+        }));
     }
 
     private static void interact(
@@ -98,7 +108,6 @@ public class InteractionConnectionMessage extends ConnectionMessage {
             final ItemStack stack,
             final InteractionHand hand) {
         if (stack.getCount() <= 0 && !player.getAbilities().instabuild) {
-//            ForgeEventFactory.onPlayerDestroyItem(player, stack, hand); // TODO check if relevant
             player.setItemInHand(hand, ItemStack.EMPTY);
         } else if (stack.getCount() < oldStack.getCount() && player.getAbilities().instabuild) {
             stack.setCount(oldStack.getCount());

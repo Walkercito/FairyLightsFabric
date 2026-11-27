@@ -1,0 +1,18 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "misc",
+  "key": {
+    "G": "minecraft:glass_pane",
+    "I": "minecraft:iron_ingot",
+    "T": "minecraft:torch"
+  },
+  "pattern": [
+    " I ",
+    "ITI",
+    " G "
+  ],
+  "result": {
+    "count": 4,
+    "id": "fairylights:incandescent_light"
+  }
+}

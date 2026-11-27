@@ -3,25 +3,20 @@ package de.lucalabs.fairylights.renderer.block.entity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
-import de.lucalabs.fairylights.connection.*;
+import de.lucalabs.fairylights.connection.Connection;
+import de.lucalabs.fairylights.connection.GarlandTinselConnection;
+import de.lucalabs.fairylights.connection.GarlandVineConnection;
+import de.lucalabs.fairylights.connection.HangingLightsConnection;
+import de.lucalabs.fairylights.connection.PennantBuntingConnection;
 import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.fastener.FenceFastener;
 import de.lucalabs.fairylights.model.light.BowModel;
 import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
-import de.lucalabs.fairylights.renderer.RenderConstants;
 import de.lucalabs.fairylights.util.Tags;
 import java.util.function.Function;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.Identifier;
-import net.minecraft.util.RandomSource;
-import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.FenceBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -45,27 +40,27 @@ public class FastenerRenderer {
             final Fastener<?> fastener,
             final float delta,
             final PoseStack matrix,
-            final MultiBufferSource source,
+            final VertexConsumer buf,
             final int packedLight,
             final int packedOverlay) {
 
         boolean renderBow = true;
         for (final Connection conn : fastener.getAllConnections()) {
             if (conn.getFastener() == fastener) {
-                this.renderConnection(delta, matrix, source, packedLight, packedOverlay, conn);
+                this.renderConnection(delta, matrix, buf, packedLight, packedOverlay, conn);
             }
-            if (renderBow && conn instanceof GarlandVineConnection && this.renderBow(fastener, matrix, source, packedLight, packedOverlay)) {
+            if (renderBow && conn instanceof GarlandVineConnection && this.renderBow(fastener, matrix, buf, packedLight, packedOverlay)) {
                 renderBow = false;
             }
         }
     }
 
     private boolean renderBow(
-            Fastener<?> fastener,
-            PoseStack matrix,
-            MultiBufferSource source,
-            int packedLight,
-            int packedOverlay) {
+            final Fastener<?> fastener,
+            final PoseStack matrix,
+            final VertexConsumer buf,
+            final int packedLight,
+            final int packedOverlay) {
 
         if (fastener instanceof FenceFastener) {
             final Level world = fastener.getWorld();
@@ -76,7 +71,6 @@ public class FastenerRenderer {
             if (!state.is(Tags.FENCES)) {
                 return false;
             }
-            final VertexConsumer buf = RenderConstants.SOLID_TEXTURE.buffer(source, RenderType::entityCutout);
             final float offset = -1.5F / 16.0F;
             final boolean north = state.getValue(FenceBlock.NORTH);
             final boolean east = state.getValue(FenceBlock.EAST);
@@ -106,14 +100,13 @@ public class FastenerRenderer {
             }
             return bow;
         } else if (fastener.getFacing().getAxis() != Direction.Axis.Y) {
-            final VertexConsumer buf = RenderConstants.SOLID_TEXTURE.buffer(source, RenderType::entityCutout);
             this.bow(matrix, fastener.getFacing(), 0.0F, buf, packedLight, packedOverlay);
             return true;
         }
         return false;
     }
 
-    private void bow(PoseStack matrix, Direction dir, float offset, VertexConsumer buf, int packedLight, int packedOverlay) {
+    private void bow(final PoseStack matrix, final Direction dir, final float offset, final VertexConsumer buf, final int packedLight, final int packedOverlay) {
         matrix.pushPose();
         matrix.mulPose(Axis.YP.rotationDegrees(180.0F - dir.toYRot()));
         if (offset != 0.0F) {
@@ -123,53 +116,15 @@ public class FastenerRenderer {
         matrix.popPose();
     }
 
-    private void renderConnection(final float delta, final PoseStack matrix, final MultiBufferSource source, final int packedLight, final int packedOverlay, final Connection conn) {
-        if (conn instanceof HangingLightsConnection) {
-            this.hangingLights.render((HangingLightsConnection) conn, delta, matrix, source, packedLight, packedOverlay);
-        } else if (conn instanceof PennantBuntingConnection) {
-            this.pennants.render((PennantBuntingConnection) conn, delta, matrix, source, packedLight, packedOverlay);
-        } else if (conn instanceof GarlandTinselConnection) {
-            this.tinsel.render((GarlandTinselConnection) conn, delta, matrix, source, packedLight, packedOverlay);
-        } else if (conn instanceof GarlandVineConnection) {
-            this.garland.render((GarlandVineConnection) conn, delta, matrix, source, packedLight, packedOverlay);
-        }
-    }
-
-    public static void renderBakedModel(final Identifier path, final PoseStack matrix, final VertexConsumer buf, final float r, final float g, final float b, final int packedLight, final int packedOverlay) {
-        renderBakedModel(Minecraft.getInstance().getModelManager().getModel(path), matrix, buf, r, g, b, packedLight, packedOverlay);
-    }
-
-    public static void renderBakedModel(final BakedModel model, final PoseStack matrix, final VertexConsumer buf, final float r, final float g, final float b, final int packedLight, final int packedOverlay) {
-        renderBakedModel(model, ItemDisplayContext.FIXED, matrix, buf, r, g, b, packedLight, packedOverlay);
-    }
-
-    // (refusing to use handlePerspective due to IForgeTransformationMatrix#push superfluous undocumented MatrixStack#push)
-    public static void renderBakedModel(
-            final BakedModel model,
-            final ItemDisplayContext type,
-            final PoseStack matrix,
-            final VertexConsumer buf,
-            final float r,
-            final float g,
-            final float b,
-            final int packedLight,
-            final int packedOverlay) {
-
-        model.getTransforms().getTransform(type).apply(false, matrix);
-
-        PoseStack.Pose lastStack = matrix.last();
-
-        RandomSource randSource = RandomSource.create();
-        for (final Direction side : Direction.values()) {
-            randSource.setSeed(42L);
-            for (final BakedQuad quad : model.getQuads(null, side, randSource)) {
-                buf.putBulkData(lastStack, quad, r, g, b, packedLight, packedOverlay);
-            }
-        }
-
-        randSource.setSeed(42L);
-        for (final BakedQuad quad : model.getQuads(null, null, randSource)) {
-            buf.putBulkData(lastStack, quad, r, g, b, packedLight, packedOverlay);
+    private void renderConnection(final float delta, final PoseStack matrix, final VertexConsumer buf, final int packedLight, final int packedOverlay, final Connection conn) {
+        if (conn instanceof HangingLightsConnection hangingLightsConnection) {
+            this.hangingLights.render(hangingLightsConnection, delta, matrix, buf, packedLight, packedOverlay);
+        } else if (conn instanceof PennantBuntingConnection pennantBuntingConnection) {
+            this.pennants.render(pennantBuntingConnection, delta, matrix, buf, packedLight, packedOverlay);
+        } else if (conn instanceof GarlandTinselConnection tinselConnection) {
+            this.tinsel.render(tinselConnection, delta, matrix, buf, packedLight, packedOverlay);
+        } else if (conn instanceof GarlandVineConnection vineConnection) {
+            this.garland.render(vineConnection, delta, matrix, buf, packedLight, packedOverlay);
         }
     }
 }

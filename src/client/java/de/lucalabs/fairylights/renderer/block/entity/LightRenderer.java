@@ -9,7 +9,6 @@ import de.lucalabs.fairylights.items.LightVariant;
 import de.lucalabs.fairylights.items.SimpleLightVariant;
 import de.lucalabs.fairylights.model.light.*;
 import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
-import de.lucalabs.fairylights.renderer.RenderConstants;
 import de.lucalabs.fairylights.util.MathHelper;
 import java.util.List;
 import java.util.Map;
@@ -18,8 +17,6 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
 
 public class LightRenderer {
     private final LightModelProvider<LightBehavior> defaultLight = LightModelProvider.of(new DefaultModel());
@@ -96,28 +93,6 @@ public class LightRenderer {
                 .build();
     }
 
-    public Data start(final MultiBufferSource source) {
-        // TODO check if unsorted translucency is really needed here
-//        final VertexConsumer buf = RenderConstants.TRANSLUCENT_TEXTURE
-//                .getVertexConsumer(source, AltRenderLayers::getUnsortedTranslucent);
-        final VertexConsumer buf = RenderConstants.TRANSLUCENT_TEXTURE
-                .buffer(source, RenderType::entityTranslucent);
-
-        ForwardingVertexConsumer translucent = new ForwardingVertexConsumer() {
-            @Override
-            protected VertexConsumer delegate() {
-                return buf;
-            }
-
-            @Override
-            public VertexConsumer normal(float x, float y, float z) {
-                return super.normal(0.0F, 1.0F, 0.0F);
-            }
-        };
-
-        return new Data(buf, translucent);
-    }
-
     public <T extends LightBehavior> LightModel<T> getModel(final Light<?> light, final int index) {
         return this.getModel(light.getVariant(), index);
     }
@@ -127,14 +102,20 @@ public class LightRenderer {
         return (LightModel<T>) this.lights.getOrDefault(variant, this.defaultLight).get(index);
     }
 
-    public void render(final PoseStack matrix, final Data data, final Light<?> light, final int index, final float delta, final int packedLight, final int packedOverlay) {
-        this.render(matrix, data, light, this.getModel(light, index), delta, packedLight, packedOverlay);
+    public void render(final PoseStack matrix, final Light<?> light, final int index, final float delta, final int packedLight, final int packedOverlay, final VertexConsumer buf) {
+        this.render(matrix, light, this.getModel(light, index), delta, packedLight, packedOverlay, buf);
     }
 
-    public <T extends LightBehavior> void render(final PoseStack matrix, final Data data, final Light<T> light, final LightModel<T> model, final float delta, final int packedLight, final int packedOverlay) {
+    public <T extends LightBehavior> void render(final PoseStack matrix, final Light<T> light, final LightModel<T> model, final float delta, final int packedLight, final int packedOverlay, final VertexConsumer buf) {
         model.animate(light, light.getBehavior(), delta);
-        model.renderToBuffer(matrix, data.solid, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
-        model.renderTranslucent(matrix, data.translucent, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.renderToBuffer(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
+    @SuppressWarnings({"rawtypes", "unchecked"})
+    public void renderTranslucent(final PoseStack matrix, final Light<?> light, final int index, final float delta, final int packedLight, final int packedOverlay, final VertexConsumer buf) {
+        final LightModel model = this.getModel(light, index);
+        model.animate(light, light.getBehavior(), delta);
+        model.renderTranslucent(matrix, buf, packedLight, packedOverlay, 1.0F, 1.0F, 1.0F, 1.0F);
     }
 
     interface LightModelProvider<T extends LightBehavior> {
@@ -178,7 +159,5 @@ public class LightRenderer {
         }
     }
 
-    public record Data(VertexConsumer solid, VertexConsumer translucent) {
-    }
 
 }

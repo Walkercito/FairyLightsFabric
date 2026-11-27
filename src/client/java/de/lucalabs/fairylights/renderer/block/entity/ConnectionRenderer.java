@@ -4,20 +4,17 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import de.lucalabs.fairylights.connection.Connection;
-import de.lucalabs.fairylights.renderer.RenderConstants;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import de.lucalabs.fairylights.util.Catenary;
 import de.lucalabs.fairylights.util.Curve;
 import de.lucalabs.fairylights.util.MathHelper;
-import net.minecraft.client.model.*;
+import java.util.function.Function;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.CubeListBuilder;
 import net.minecraft.client.model.geom.builders.LayerDefinition;
 import net.minecraft.client.model.geom.builders.MeshDefinition;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import java.util.function.Function;
 
 public abstract class ConnectionRenderer<C extends Connection> {
     private final WireModel model;
@@ -36,7 +33,7 @@ public abstract class ConnectionRenderer<C extends Connection> {
             final C conn,
             final float delta,
             final PoseStack matrix,
-            final MultiBufferSource source,
+            final VertexConsumer buf,
             final int packedLight,
             final int packedOverlay) {
 
@@ -46,7 +43,6 @@ public abstract class ConnectionRenderer<C extends Connection> {
         if (currCat != null && prevCat != null) {
             final Curve cat = prevCat.lerp(currCat, delta);
             final Curve.SegmentIterator it = cat.iterator();
-            final VertexConsumer buf = RenderConstants.SOLID_TEXTURE.buffer(source, RenderType::entityCutout);
 
             final int color = this.getWireColor(conn);
             final float r = ((color >> 16) & 0xFF) / 255.0F;
@@ -61,9 +57,9 @@ public abstract class ConnectionRenderer<C extends Connection> {
                 matrix.scale(1.0F + this.wireInflate, 1.0F, it.getLength() * 16.0F);
                 this.model.renderToBuffer(matrix, buf, packedLight, packedOverlay, r, g, b, 1.0F);
                 matrix.popPose();
-                this.renderSegment(conn, it, delta, matrix, packedLight, source, packedOverlay);
+                this.renderSegment(conn, it, delta, matrix, packedLight, buf, packedOverlay);
             }
-            this.render(conn, cat, delta, matrix, source, packedLight, packedOverlay);
+            this.render(conn, cat, delta, matrix, buf, packedLight, packedOverlay);
         }
     }
 
@@ -76,23 +72,30 @@ public abstract class ConnectionRenderer<C extends Connection> {
             final Curve catenary,
             final float delta,
             final PoseStack matrix,
-            final MultiBufferSource source,
+            final VertexConsumer buf,
             final int packedLight,
-            final int packedOverlay) {}
+            final int packedOverlay) {
+    }
 
-    protected void renderSegment(final C connection, final Catenary.SegmentView it, final float delta, final PoseStack matrix, final int packedLight, final MultiBufferSource source, final int packedOverlay) {}
+    protected void renderSegment(
+            final C connection,
+            final Catenary.SegmentView it,
+            final float delta,
+            final PoseStack matrix,
+            final int packedLight,
+            final VertexConsumer buf,
+            final int packedOverlay) {
+    }
 
-    public static class WireModel extends Model {
+    public static class WireModel {
         final ModelPart root;
 
         WireModel(final ModelPart root) {
-            super(RenderType::entityCutout);
             this.root = root;
         }
 
-        @Override
         public void renderToBuffer(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
-            this.root.render(matrix, builder, light, overlay, r, g, b, a);
+            RenderUtils.renderPart(this.root, matrix, builder, light, overlay, r, g, b, a);
         }
 
         public static LayerDefinition createLayer(final int u, final int v, final int size) {

@@ -1,57 +1,61 @@
 package de.lucalabs.fairylights.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import de.lucalabs.fairylights.FairyLights;
 import de.lucalabs.fairylights.components.FairyLightComponents;
 import de.lucalabs.fairylights.entity.FenceFastenerEntity;
+import de.lucalabs.fairylights.renderer.RenderConstants;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import de.lucalabs.fairylights.renderer.block.entity.FastenerRenderer;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.Sheets;
+import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
-import net.minecraft.client.renderer.texture.OverlayTexture;
+import net.minecraft.client.renderer.entity.state.EntityRenderState;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.client.renderer.texture.TextureAtlas;
-import net.minecraft.core.BlockPos;
-import net.minecraft.resources.Identifier;
-import net.minecraft.world.level.LightLayer;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import org.jetbrains.annotations.Nullable;
 
-public final class FenceFastenerRenderer extends EntityRenderer<FenceFastenerEntity> {
-    public static final Identifier MODEL = Identifier.fromNamespaceAndPath(FairyLights.ID, "block/fence_fastener");
+public final class FenceFastenerRenderer extends EntityRenderer<FenceFastenerEntity, FenceFastenerRenderer.State> {
 
     private final FastenerRenderer renderer;
+    private final TextureAtlasSprite sprite;
 
     public FenceFastenerRenderer(final EntityRendererProvider.Context context) {
         super(context);
         this.renderer = new FastenerRenderer(context::bakeLayer);
+        this.sprite = context.getSprites().get(RenderConstants.CONNECTIONS);
     }
 
     @Override
-    protected int getBlockLight(final FenceFastenerEntity entity, final BlockPos delta) {
-        return entity.getWorld().getLightLevel(LightLayer.BLOCK, entity.getBlockPos());
+    public State createRenderState() {
+        return new State();
     }
 
     @Override
-    public void render(
-            final FenceFastenerEntity entity,
-            final float yaw,
-            final float delta,
-            final PoseStack matrix,
-            final MultiBufferSource source,
-            final int packedLight) {
-
-        final VertexConsumer buf = source.getBuffer(Sheets.cutoutBlockSheet());
-        matrix.pushPose();
-        FastenerRenderer.renderBakedModel(MODEL, matrix, buf, 1.0F, 1.0F, 1.0F, packedLight, OverlayTexture.NO_OVERLAY);
-        matrix.popPose();
-        FairyLightComponents.FASTENER.get(entity).get().ifPresent(
-                f -> this.renderer.render(f, delta, matrix, source, packedLight, OverlayTexture.DEFAULT_UV));
-        super.render(entity, yaw, delta, matrix, source, packedLight);
+    public void extractRenderState(final FenceFastenerEntity entity, final State state, final float tickProgress) {
+        super.extractRenderState(entity, state, tickProgress);
+        state.fastener = FairyLightComponents.FASTENER.get(entity).get().orElse(null);
+        state.delta = tickProgress;
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public Identifier getTexture(final FenceFastenerEntity entity) {
-        return TextureAtlas.LOCATION_BLOCKS;
+    public void submit(final State state, final PoseStack pose, final SubmitNodeCollector collector, final CameraRenderState cameraState) {
+        if (state.fastener != null) {
+            RenderUtils.submit(
+                    collector,
+                    pose,
+                    this.sprite,
+                    RenderTypes.entityCutout(TextureAtlas.LOCATION_BLOCKS),
+                    (stack, buffer) -> this.renderer.render(state.fastener, state.delta, stack, buffer, state.lightCoords, OverlayTexture.NO_OVERLAY));
+        }
+        super.submit(state, pose, collector, cameraState);
+    }
+
+    public static class State extends EntityRenderState {
+        @Nullable
+        de.lucalabs.fairylights.fastener.Fastener<?> fastener;
+        float delta;
     }
 }
