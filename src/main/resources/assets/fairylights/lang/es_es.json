@@ -94,5 +94,7 @@
     "subtitles.block.fairylights.feature.colorChange": "El color cambia",
     "tutorial.fairylights.craft_hanging_lights.title": "Crea luces colgantes",
     "tutorial.fairylights.craft_hanging_lights.description": "Usa el libro de recetas para encontrar la receta.",
-    "item.fairylights.fence_fastener": "Anclaje de valla"
+    "item.fairylights.fence_fastener": "Anclaje de valla",
+    "item.fairylights.triangle_pennant_cloth": "Banderín triangular",
+    "item.fairylights.square_pennant_cloth": "Banderín cuadrado"
 }

@@ -6,6 +6,7 @@ import de.lucalabs.fairylights.connection.Connection;
 import de.lucalabs.fairylights.connection.PennantBuntingConnection;
 import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.feature.Pennant;
+import de.lucalabs.fairylights.items.FairyLightItems;
 import de.lucalabs.fairylights.items.DyeableItem;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.SubmitNodeCollector;
@@ -39,7 +40,9 @@ public final class PennantItemRenderer {
                 continue;
             }
             for (final Pennant pennant : pennants) {
-                final ItemStack stack = new ItemStack(pennant.getItem());
+                final ItemStack stack = new ItemStack(pennant.getItem() == FairyLightItems.SQUARE_PENNANT
+                        ? FairyLightItems.SQUARE_PENNANT_CLOTH
+                        : FairyLightItems.TRIANGLE_PENNANT_CLOTH);
                 DyeableItem.setColor(stack, pennant.getColor());
                 final ItemStackRenderState state = new ItemStackRenderState();
                 this.resolver.updateForTopItem(state, stack, ItemDisplayContext.FIXED, fastener.getWorld(), Minecraft.getInstance().player, 0);
