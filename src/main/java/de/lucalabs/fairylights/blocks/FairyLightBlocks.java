@@ -56,7 +56,7 @@ public final class FairyLightBlocks {
                         .forceSolidOn()
                         .strength(3.5F)
                         .sound(SoundType.LANTERN)
-                        .lightLevel(state -> state.getValue(LightBlock.LIT) ? 15 : 0)
+                        .lightLevel(state -> state.getValue(LightBlock.LIT) ? LightVariant.lightLevel(variant) : 0)
                         .noCollision(),
                 variant));
     }

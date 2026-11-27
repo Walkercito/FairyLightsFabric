@@ -34,7 +34,6 @@ import net.minecraft.world.level.block.LightBlock;
 import net.minecraft.world.phys.Vec3;
 
 public final class HangingLightsConnection extends HangingFeatureConnection<Light<?>> {
-    private static final int MAX_LIGHT = 15;
     private static final int LIGHT_UPDATE_WAIT = 400;
     private static final int LIGHT_UPDATE_RATE = 10;
 
@@ -127,7 +126,8 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
                     this.lightUpdateIndex = 0;
                     this.lightUpdateTime = this.world.getRandom().nextInt(LIGHT_UPDATE_WAIT / 2);
                 } else {
-                    this.setLight(BlockPos.containing(this.features[this.lightUpdateIndex++].getAbsolutePoint(this.fastener)));
+                    final Light<?> feature = this.features[this.lightUpdateIndex++];
+                    this.setLight(BlockPos.containing(feature.getAbsolutePoint(this.fastener)), LightVariant.lightLevel(feature.getVariant()));
                 }
             }
         }
@@ -163,7 +163,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         if (!this.isDynamic() && this.isOn) {
             final BlockPos pos = BlockPos.containing(light.getAbsolutePoint(this.fastener));
             this.litBlocks.add(pos);
-            this.setLight(pos);
+            this.setLight(pos, LightVariant.lightLevel(light.getVariant()));
         }
     }
 
@@ -220,9 +220,12 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         }
     }
 
-    private void setLight(final BlockPos pos) {
-        if (this.world.isLoaded(pos) && this.world.isEmptyBlock(pos) && this.world.getBrightness(LightLayer.BLOCK, pos) < MAX_LIGHT) {
-            this.world.setBlock(pos, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15), Block.UPDATE_CLIENTS);
+    private void setLight(final BlockPos pos, final int level) {
+        if (level <= 0) {
+            return;
+        }
+        if (this.world.isLoaded(pos) && this.world.isEmptyBlock(pos) && this.world.getBrightness(LightLayer.BLOCK, pos) < level) {
+            this.world.setBlock(pos, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, level), Block.UPDATE_CLIENTS);
         }
     }
 
