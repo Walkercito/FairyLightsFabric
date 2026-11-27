@@ -1,8 +1,8 @@
 package de.lucalabs.fairylights.components;
 
 import de.lucalabs.fairylights.items.LightVariant;
-import dev.onyxstudios.cca.api.v3.component.ComponentKey;
-import net.minecraft.item.ItemStack;
+import org.ladysnake.cca.api.v3.component.ComponentKey;
+import net.minecraft.world.item.ItemStack;
 
 public class LightVariantComponent extends GenericItemComponent<LightVariant<?>> {
     public LightVariantComponent(ItemStack stack, ComponentKey<?> key) {

@@ -2,11 +2,10 @@ package de.lucalabs.fairylights.items;
 
 import de.lucalabs.fairylights.components.FairyLightComponents;
 import de.lucalabs.fairylights.feature.light.LightBehavior;
-import dev.onyxstudios.cca.api.v3.component.ComponentProvider;
-import net.minecraft.item.ItemStack;
-import net.minecraft.util.math.Box;
-
+import org.ladysnake.cca.api.v3.component.ComponentProvider;
 import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.AABB;
 
 public abstract class LightVariant<T extends LightBehavior> {
 
@@ -14,7 +13,7 @@ public abstract class LightVariant<T extends LightBehavior> {
 
     public abstract float getSpacing();
 
-    public abstract Box getBounds();
+    public abstract AABB getBounds();
 
     public abstract double getFloorOffset();
 

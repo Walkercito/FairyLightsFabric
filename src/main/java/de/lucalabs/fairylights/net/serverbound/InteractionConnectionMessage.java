@@ -8,19 +8,19 @@ import de.lucalabs.fairylights.feature.FeatureType;
 import de.lucalabs.fairylights.net.ConnectionMessage;
 import de.lucalabs.fairylights.util.Utils;
 import net.fabricmc.fabric.api.networking.v1.PacketSender;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.network.PacketByteBuf;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.network.ServerPlayNetworkHandler;
-import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.util.Hand;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.math.Vec3d;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.network.ServerGamePacketListenerImpl;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.phys.Vec3;
 
 public class InteractionConnectionMessage extends ConnectionMessage {
 
-    public static final Identifier ID = new Identifier(FairyLights.ID, "interaction_connection");
+    public static final Identifier ID = Identifier.fromNamespaceAndPath(FairyLights.ID, "interaction_connection");
 
     private static final float RANGE = (Connection.MAX_LENGTH + 1) * (Connection.MAX_LENGTH + 1);
     private static final float REACH = 6 * 6;
@@ -31,7 +31,7 @@ public class InteractionConnectionMessage extends ConnectionMessage {
             final Intersection intersection) {
         super(connection);
 
-        Vec3d hit = intersection.result();
+        Vec3 hit = intersection.result();
 
         writeByte(type.ordinal());
         writeDouble(hit.x);
@@ -43,9 +43,9 @@ public class InteractionConnectionMessage extends ConnectionMessage {
 
     public static void apply(
             MinecraftServer server,
-            ServerPlayerEntity player,
-            ServerPlayNetworkHandler handler,
-            PacketByteBuf buf,
+            ServerPlayer player,
+            ServerGamePacketListenerImpl handler,
+            FriendlyByteBuf buf,
             PacketSender responseSender) {
         ParsedData baseData = parse(buf);
 
@@ -55,16 +55,16 @@ public class InteractionConnectionMessage extends ConnectionMessage {
         double hitX = buf.readDouble();
         double hitY = buf.readDouble();
         double hitZ = buf.readDouble();
-        Vec3d hit = new Vec3d(hitX, hitY, hitZ);
+        Vec3 hit = new Vec3(hitX, hitY, hitZ);
 
         FeatureType featureType = FeatureType.fromId(buf.readVarInt());
         int featureId = buf.readVarInt();
 
         server.execute(() -> {
-            getConnection(baseData.accessor(), baseData.id(), c -> true, player.getWorld()).ifPresent(connection -> {
+            getConnection(baseData.accessor(), baseData.id(), c -> true, player.level()).ifPresent(connection -> {
                 if (connection.isModifiable(player) &&
-                        player.squaredDistanceTo(Vec3d.of(connection.getFastener().getPos())) < RANGE &&
-                        player.squaredDistanceTo(hitX, hitY, hitZ) < REACH
+                        player.distanceToSqr(Vec3.atLowerCornerOf(connection.getFastener().getPos())) < RANGE &&
+                        player.distanceToSqr(hitX, hitY, hitZ) < REACH
                 ) {
                     if (action == PlayerAction.ATTACK) {
                         connection.disconnect(player, hit);
@@ -77,13 +77,13 @@ public class InteractionConnectionMessage extends ConnectionMessage {
     }
 
     private static void interact(
-            final PlayerEntity player,
+            final Player player,
             final Connection connection,
             final FeatureType featureType,
             final int featureId,
-            final Vec3d hit) {
-        for (final Hand hand : Hand.values()) {
-            final ItemStack stack = player.getStackInHand(hand);
+            final Vec3 hit) {
+        for (final InteractionHand hand : InteractionHand.values()) {
+            final ItemStack stack = player.getItemInHand(hand);
             final ItemStack oldStack = stack.copy();
             if (connection.interact(player, hit, featureType, featureId, stack, hand)) {
                 updateItem(player, oldStack, stack, hand);
@@ -93,14 +93,14 @@ public class InteractionConnectionMessage extends ConnectionMessage {
     }
 
     private static void updateItem(
-            final PlayerEntity player,
+            final Player player,
             final ItemStack oldStack,
             final ItemStack stack,
-            final Hand hand) {
-        if (stack.getCount() <= 0 && !player.getAbilities().creativeMode) {
+            final InteractionHand hand) {
+        if (stack.getCount() <= 0 && !player.getAbilities().instabuild) {
 //            ForgeEventFactory.onPlayerDestroyItem(player, stack, hand); // TODO check if relevant
-            player.setStackInHand(hand, ItemStack.EMPTY);
-        } else if (stack.getCount() < oldStack.getCount() && player.getAbilities().creativeMode) {
+            player.setItemInHand(hand, ItemStack.EMPTY);
+        } else if (stack.getCount() < oldStack.getCount() && player.getAbilities().instabuild) {
             stack.setCount(oldStack.getCount());
         }
     }

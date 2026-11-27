@@ -4,13 +4,13 @@ import com.google.common.collect.Multimap;
 import de.lucalabs.fairylights.items.crafting.GenericIngredient;
 import de.lucalabs.fairylights.items.crafting.GenericRecipe;
 import de.lucalabs.fairylights.util.Utils;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.text.Text;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 
 public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> {
     boolean isRequired();
@@ -22,9 +22,9 @@ public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngre
 
     void consume(A accumulator, ItemStack ingredient);
 
-    boolean finish(A accumulator, NbtCompound nbt);
+    boolean finish(A accumulator, CompoundTag nbt);
 
-    default boolean process(final Multimap<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> map, final NbtCompound nbt) {
+    default boolean process(final Multimap<AuxiliaryIngredient<?>, GenericRecipe.MatchResultAuxiliary> map, final CompoundTag nbt) {
         final Collection<GenericRecipe.MatchResultAuxiliary> results = map.get(this);
         if (results.isEmpty() && this.isRequired()) {
             return true;
@@ -37,7 +37,7 @@ public interface AuxiliaryIngredient<A> extends GenericIngredient<AuxiliaryIngre
     }
 
     @Override
-    default void addTooltip(final List<Text> tooltip) {
+    default void addTooltip(final List<Component> tooltip) {
         if (!this.isRequired()) {
             tooltip.add(Utils.formatRecipeTooltip("recipe.fairylights.ingredient.auxiliary.optional"));
         }

@@ -13,24 +13,23 @@ import de.lucalabs.fairylights.string.StringType;
 import de.lucalabs.fairylights.string.StringTypes;
 import de.lucalabs.fairylights.util.ItemHelper;
 import de.lucalabs.fairylights.util.Tags;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.LightBlock;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtHelper;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.sound.SoundCategory;
-import net.minecraft.sound.SoundEvent;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.LightType;
-import net.minecraft.world.World;
-
 import java.util.*;
+import net.minecraft.core.BlockPos;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
+import net.minecraft.sounds.SoundEvent;
+import net.minecraft.sounds.SoundSource;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LightBlock;
+import net.minecraft.world.phys.Vec3;
 
 public final class HangingLightsConnection extends HangingFeatureConnection<Light<?>> {
     private static final int MAX_LIGHT = 15;
@@ -49,7 +48,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
 
     public HangingLightsConnection(
             final ConnectionType<? extends HangingLightsConnection> type,
-            final World world,
+            final Level world,
             final Fastener<?> fastenerOrigin,
             final UUID uuid) {
 
@@ -64,17 +63,17 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
 
     @Override
     public boolean interact(
-            final PlayerEntity player,
-            final Vec3d hit,
+            final Player player,
+            final Vec3 hit,
             final FeatureType featureType,
             final int feature,
             final ItemStack heldStack,
-            final Hand hand) {
+            final InteractionHand hand) {
 
-        if (featureType == FEATURE && heldStack.isIn(Tags.LIGHTS)) {
+        if (featureType == FEATURE && heldStack.is(Tags.LIGHTS)) {
             final int index = feature % this.pattern.size();
             final ItemStack light = this.pattern.get(index);
-            if (!ItemStack.areEqual(light, heldStack)) {
+            if (!ItemStack.matches(light, heldStack)) {
                 final ItemStack placed = heldStack.split(1);
                 this.pattern.set(index, placed);
                 ItemHelper.giveItemToPlayer(player, light);
@@ -85,7 +84,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
                         hit.y,
                         hit.z,
                         FairyLightSounds.FEATURE_COLOR_CHANGE,
-                        SoundCategory.BLOCKS,
+                        SoundSource.BLOCKS,
                         1,
                         1);
                 return true;
@@ -108,7 +107,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
             pitch = 0.5F;
         }
 
-        this.world.playSound(null, hit.x, hit.y, hit.z, lightSnd, SoundCategory.BLOCKS, 1, pitch);
+        this.world.playSound(null, hit.x, hit.y, hit.z, lightSnd, SoundSource.BLOCKS, 1, pitch);
         this.computeCatenary();
         return true;
     }
@@ -126,14 +125,14 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
                     this.lightUpdateIndex = 0;
                     this.lightUpdateTime = this.world.random.nextInt(LIGHT_UPDATE_WAIT / 2);
                 } else {
-                    this.setLight(BlockPos.ofFloored(this.features[this.lightUpdateIndex++].getAbsolutePoint(this.fastener)));
+                    this.setLight(BlockPos.containing(this.features[this.lightUpdateIndex++].getAbsolutePoint(this.fastener)));
                 }
             }
         }
     }
 
     private void updateNeighbors(final Fastener<?> fastener) {
-        this.world.updateComparators(fastener.getPos(), FairyLightBlocks.FASTENER);
+        this.world.updateNeighbourForOutputSignal(fastener.getPos(), FairyLightBlocks.FASTENER);
     }
 
     @Override
@@ -143,11 +142,11 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
 
     @Override
     protected boolean canReuse(final Light<?> feature, final int index) {
-        return ItemStack.areEqual(feature.getItem(), this.getPatternStack(index));
+        return ItemStack.matches(feature.getItem(), this.getPatternStack(index));
     }
 
     @Override
-    protected Light<?> createFeature(final int index, final Vec3d point, final float yaw, final float pitch) {
+    protected Light<?> createFeature(final int index, final Vec3 point, final float yaw, final float pitch) {
         final ItemStack lightData = this.getPatternStack(index);
         return this.createLight(index, point, yaw, pitch, lightData, LightVariant.get(lightData).orElse(SimpleLightVariant.FAIRY_LIGHT));
     }
@@ -160,13 +159,13 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     protected void updateFeature(final Light<?> light) {
         super.updateFeature(light);
         if (!this.isDynamic() && this.isOn) {
-            final BlockPos pos = BlockPos.ofFloored(light.getAbsolutePoint(this.fastener));
+            final BlockPos pos = BlockPos.containing(light.getAbsolutePoint(this.fastener));
             this.litBlocks.add(pos);
             this.setLight(pos);
         }
     }
 
-    private <T extends LightBehavior> Light<T> createLight(final int index, final Vec3d point, final float yaw, final float pitch, final ItemStack stack, final LightVariant<T> variant) {
+    private <T extends LightBehavior> Light<T> createLight(final int index, final Vec3 point, final float yaw, final float pitch, final ItemStack stack, final LightVariant<T> variant) {
         return new Light<>(index, point, yaw, pitch, stack, variant, 0.125F);
     }
 
@@ -214,61 +213,61 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     }
 
     private void removeLight(final BlockPos pos) {
-        if (this.world.getBlockState(pos).isOf(Blocks.LIGHT)) {
+        if (this.world.getBlockState(pos).is(Blocks.LIGHT)) {
             this.world.removeBlock(pos, false);
         }
     }
 
     private void setLight(final BlockPos pos) {
-        if (this.world.canSetBlock(pos) && this.world.isAir(pos) && this.world.getLightLevel(LightType.BLOCK, pos) < MAX_LIGHT) {
-            this.world.setBlockState(pos, Blocks.LIGHT.getDefaultState().with(LightBlock.LEVEL_15, 15), Block.NOTIFY_LISTENERS);
+        if (this.world.isLoaded(pos) && this.world.isEmptyBlock(pos) && this.world.getBrightness(LightLayer.BLOCK, pos) < MAX_LIGHT) {
+            this.world.setBlock(pos, Blocks.LIGHT.defaultBlockState().setValue(LightBlock.LEVEL, 15), Block.UPDATE_CLIENTS);
         }
     }
 
     @Override
-    public NbtCompound serialize() {
-        final NbtCompound compound = super.serialize();
+    public CompoundTag serialize() {
+        final CompoundTag compound = super.serialize();
         compound.putBoolean("isOn", this.isOn);
-        final NbtList litBlocks = new NbtList();
+        final ListTag litBlocks = new ListTag();
         for (final BlockPos litBlock : this.litBlocks) {
-            litBlocks.add(NbtHelper.fromBlockPos(litBlock));
+            litBlocks.add(NbtUtils.writeBlockPos(litBlock));
         }
         compound.put("litBlocks", litBlocks);
         return compound;
     }
 
     @Override
-    public void deserialize(final NbtCompound compound) {
+    public void deserialize(final CompoundTag compound) {
         super.deserialize(compound);
         this.isOn = compound.getBoolean("isOn");
         this.litBlocks.clear();
-        final NbtList litBlocks = compound.getList("litBlocks", NbtElement.COMPOUND_TYPE);
+        final ListTag litBlocks = compound.getList("litBlocks", Tag.TAG_COMPOUND);
         for (int i = 0; i < litBlocks.size(); i++) {
-            this.litBlocks.add(NbtHelper.toBlockPos(litBlocks.getCompound(i)));
+            this.litBlocks.add(NbtUtils.readBlockPos(litBlocks.getCompound(i)));
         }
     }
 
     @Override
-    public NbtCompound serializeLogic() {
-        final NbtCompound compound = super.serializeLogic();
+    public CompoundTag serializeLogic() {
+        final CompoundTag compound = super.serializeLogic();
         HangingLightsConnectionItem.setString(compound, this.string);
-        final NbtList tagList = new NbtList();
+        final ListTag tagList = new ListTag();
         for (final ItemStack light : this.pattern) {
-            tagList.add(light.writeNbt(new NbtCompound()));
+            tagList.add(light.save(new CompoundTag()));
         }
         compound.put("pattern", tagList);
         return compound;
     }
 
     @Override
-    public void deserializeLogic(final NbtCompound compound) {
+    public void deserializeLogic(final CompoundTag compound) {
         super.deserializeLogic(compound);
         this.string = HangingLightsConnectionItem.getString(compound);
-        final NbtList patternList = compound.getList("pattern", NbtElement.COMPOUND_TYPE);
+        final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
         this.pattern = new ArrayList<>();
         for (int i = 0; i < patternList.size(); i++) {
-            final NbtCompound lightCompound = patternList.getCompound(i);
-            this.pattern.add(ItemStack.fromNbt(lightCompound));
+            final CompoundTag lightCompound = patternList.getCompound(i);
+            this.pattern.add(ItemStack.of(lightCompound));
         }
     }
 }

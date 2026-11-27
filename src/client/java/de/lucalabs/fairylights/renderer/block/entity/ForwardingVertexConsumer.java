@@ -1,6 +1,6 @@
 package de.lucalabs.fairylights.renderer.block.entity;
 
-import net.minecraft.client.render.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 
 public abstract class ForwardingVertexConsumer implements VertexConsumer {
     protected abstract VertexConsumer delegate();
@@ -16,18 +16,18 @@ public abstract class ForwardingVertexConsumer implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer texture(float u, float v) {
-        return this.delegate().texture(u, v);
+    public VertexConsumer uv(float u, float v) {
+        return this.delegate().uv(u, v);
     }
 
     @Override
-    public VertexConsumer overlay(int u, int v) {
-        return this.delegate().overlay(u, v);
+    public VertexConsumer overlayCoords(int u, int v) {
+        return this.delegate().overlayCoords(u, v);
     }
 
     @Override
-    public VertexConsumer light(int u, int v) {
-        return this.delegate().light(u, v);
+    public VertexConsumer uv2(int u, int v) {
+        return this.delegate().uv2(u, v);
     }
 
     @Override
@@ -36,17 +36,17 @@ public abstract class ForwardingVertexConsumer implements VertexConsumer {
     }
 
     @Override
-    public void next() {
-        this.delegate().next();
+    public void endVertex() {
+        this.delegate().endVertex();
     }
 
     @Override
-    public void fixedColor(int r, int g, int b, int a) {
-        this.delegate().fixedColor(r, g, b, a);
+    public void defaultColor(int r, int g, int b, int a) {
+        this.delegate().defaultColor(r, g, b, a);
     }
 
     @Override
-    public void unfixColor() {
-        this.delegate().unfixColor();
+    public void unsetDefaultColor() {
+        this.delegate().unsetDefaultColor();
     }
 }

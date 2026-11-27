@@ -1,11 +1,11 @@
 package de.lucalabs.fairylights.components;
 
-import dev.onyxstudios.cca.api.v3.component.ComponentKey;
-import dev.onyxstudios.cca.api.v3.item.ItemComponent;
-import net.minecraft.item.ItemStack;
+import org.ladysnake.cca.api.v3.component.ComponentKey;
+import org.ladysnake.cca.api.v3.item.ItemComponent;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Optional;
+import net.minecraft.world.item.ItemStack;
 
 public abstract class GenericItemComponent<T> extends ItemComponent {
 

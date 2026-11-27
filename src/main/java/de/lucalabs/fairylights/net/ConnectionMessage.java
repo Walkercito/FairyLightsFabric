@@ -5,23 +5,22 @@ import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.fastener.FastenerType;
 import de.lucalabs.fairylights.fastener.accessor.FastenerAccessor;
 import io.netty.buffer.Unpooled;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.World;
-
 import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.function.Predicate;
+import net.minecraft.core.BlockPos;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.world.level.Level;
 
-public abstract class ConnectionMessage extends PacketByteBuf {
+public abstract class ConnectionMessage extends FriendlyByteBuf {
 
     public ConnectionMessage(final Connection connection) {
         super(Unpooled.buffer());
         final Fastener<?> fastener = connection.getFastener();
         writeBlockPos(fastener.getPos());
         writeNbt(FastenerType.serialize(fastener.createAccessor()));
-        writeUuid(connection.getUUID());
+        writeUUID(connection.getUUID());
     }
 
     @SuppressWarnings("unchecked")
@@ -29,14 +28,14 @@ public abstract class ConnectionMessage extends PacketByteBuf {
             final FastenerAccessor accessor,
             final UUID id,
             final Predicate<? super Connection> typePredicate,
-            final World world) {
+            final Level world) {
         return accessor.get(world, false).flatMap(f -> (Optional<C>) f.get(id).filter(typePredicate));
     }
 
-    protected static ParsedData parse(PacketByteBuf buf) {
+    protected static ParsedData parse(FriendlyByteBuf buf) {
         final BlockPos pos = buf.readBlockPos();
         final FastenerAccessor fastenerAcc = FastenerType.deserialize(Objects.requireNonNull(buf.readNbt()));
-        final UUID id = buf.readUuid();
+        final UUID id = buf.readUUID();
 
         return new ParsedData(pos, fastenerAcc, id);
     }

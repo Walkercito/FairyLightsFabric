@@ -10,54 +10,54 @@ import de.lucalabs.fairylights.renderer.block.entity.*;
 import de.lucalabs.fairylights.renderer.entity.FenceFastenerRenderer;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.ModelLoadingRegistry;
-import net.fabricmc.fabric.api.client.rendering.v1.EntityModelLayerRegistry;
+import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import net.minecraft.client.render.block.entity.BlockEntityRendererFactories;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 
 public class FairyLightsClient implements ClientModInitializer {
 
     @Override
     public void onInitializeClient() {
-        BlockEntityRendererFactories.register(
+        BlockEntityRenderers.register(
                 FairyLightBlockEntities.FASTENER,
                 context -> new FastenerBlockEntityRenderer(context, new RegularBlockView()));
 
-        BlockEntityRendererFactories.register(
+        BlockEntityRenderers.register(
                 FairyLightBlockEntities.LIGHT,
                 LightBlockEntityRenderer::new
         );
 
         EntityRendererRegistry.register(FairyLightEntities.FASTENER, FenceFastenerRenderer::new);
 
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.BOW, BowModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.GARLAND_RINGS, GarlandVineRenderer.RingsModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.TINSEL_STRIP, GarlandTinselRenderer.StripModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.FAIRY_LIGHT, FairyLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PAPER_LANTERN, PaperLanternModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ORB_LANTERN, OrbLanternModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.FLOWER_LIGHT, FlowerLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.CANDLE_LANTERN_LIGHT, ColorCandleLanternModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.JACK_O_LANTERN, JackOLanternLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SKULL_LIGHT, SkullLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.GHOST_LIGHT, GhostLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SPIDER_LIGHT, SpiderLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.WITCH_LIGHT, WitchLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SNOWFLAKE_LIGHT, SnowflakeLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.HEART_LIGHT, HeartLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.MOON_LIGHT, MoonLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.STAR_LIGHT, StarLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_1, () -> IcicleLightsModel.createLayer(1));
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_2, () -> IcicleLightsModel.createLayer(2));
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_3, () -> IcicleLightsModel.createLayer(3));
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_4, () -> IcicleLightsModel.createLayer(4));
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.METEOR_LIGHT, MeteorLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.CANDLE_LANTERN, CandleLanternModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.OIL_LANTERN, OilLanternModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.INCANDESCENT_LIGHT, IncandescentLightModel::createLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.TINSEL_WIRE, GarlandTinselRenderer::wireLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.VINE_WIRE, GarlandVineRenderer::wireLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PENNANT_WIRE, PennantBuntingRenderer::wireLayer);
-        EntityModelLayerRegistry.registerModelLayer(FairyLightModelLayers.LIGHTS_WIRE, HangingLightsRenderer::wireLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.BOW, BowModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.GARLAND_RINGS, GarlandVineRenderer.RingsModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.TINSEL_STRIP, GarlandTinselRenderer.StripModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.FAIRY_LIGHT, FairyLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PAPER_LANTERN, PaperLanternModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ORB_LANTERN, OrbLanternModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.FLOWER_LIGHT, FlowerLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.CANDLE_LANTERN_LIGHT, ColorCandleLanternModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.JACK_O_LANTERN, JackOLanternLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SKULL_LIGHT, SkullLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.GHOST_LIGHT, GhostLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SPIDER_LIGHT, SpiderLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.WITCH_LIGHT, WitchLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.SNOWFLAKE_LIGHT, SnowflakeLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.HEART_LIGHT, HeartLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.MOON_LIGHT, MoonLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.STAR_LIGHT, StarLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_1, () -> IcicleLightsModel.createLayer(1));
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_2, () -> IcicleLightsModel.createLayer(2));
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_3, () -> IcicleLightsModel.createLayer(3));
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.ICICLE_LIGHTS_4, () -> IcicleLightsModel.createLayer(4));
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.METEOR_LIGHT, MeteorLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.CANDLE_LANTERN, CandleLanternModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.OIL_LANTERN, OilLanternModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.INCANDESCENT_LIGHT, IncandescentLightModel::createLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.TINSEL_WIRE, GarlandTinselRenderer::wireLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.VINE_WIRE, GarlandVineRenderer::wireLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PENNANT_WIRE, PennantBuntingRenderer::wireLayer);
+        ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.LIGHTS_WIRE, HangingLightsRenderer::wireLayer);
 
         ModelLoadingRegistry.INSTANCE.registerModelProvider((manager, out) -> {
             // Tell Fabric to load this model during resource reloading

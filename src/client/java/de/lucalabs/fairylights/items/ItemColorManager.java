@@ -3,11 +3,10 @@ package de.lucalabs.fairylights.items;
 import de.lucalabs.fairylights.feature.light.ColorChangingBehavior;
 import de.lucalabs.fairylights.string.StringTypes;
 import net.fabricmc.fabric.api.client.rendering.v1.ColorProviderRegistry;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.world.item.Item;
 
 public final class ItemColorManager {
 
@@ -63,7 +62,7 @@ public final class ItemColorManager {
                 FairyLightItems.TINSEL);
 
         ColorProviderRegistry.ITEM.register((stack, index) -> {
-            final NbtCompound tag = stack.getNbt();
+            final CompoundTag tag = stack.getNbt();
             if (index == 0) {
                 if (tag != null) {
                     return HangingLightsConnectionItem.getString(tag).color();
@@ -71,7 +70,7 @@ public final class ItemColorManager {
                 return StringTypes.BLACK_STRING.color();
             }
             if (tag != null) {
-                final NbtList tagList = tag.getList("pattern", NbtElement.COMPOUND_TYPE);
+                final ListTag tagList = tag.getList("pattern", Tag.COMPOUND_TYPE);
                 if (!tagList.isEmpty()) {
                     final ItemStack stack2 = ItemStack.fromNbt(tagList.getCompound((index - 1) % tagList.size()));
                     if (ColorChangingBehavior.exists(stack2)) {
@@ -88,9 +87,9 @@ public final class ItemColorManager {
             if (index == 0) {
                 return 0xFFFFFFFF;
             }
-            final NbtCompound tag = stack.getNbt();
+            final CompoundTag tag = stack.getNbt();
             if (tag != null) {
-                final NbtList tagList = tag.getList("pattern", NbtElement.COMPOUND_TYPE);
+                final ListTag tagList = tag.getList("pattern", Tag.COMPOUND_TYPE);
                 if (!tagList.isEmpty()) {
                     final ItemStack light = ItemStack.fromNbt(tagList.getCompound((index - 1) % tagList.size()));
                     return DyeableItem.getColor(light);

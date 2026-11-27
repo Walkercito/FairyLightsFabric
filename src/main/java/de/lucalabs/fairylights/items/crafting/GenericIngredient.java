@@ -1,13 +1,12 @@
 package de.lucalabs.fairylights.items.crafting;
 
 import com.google.common.collect.ImmutableList;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.recipe.Ingredient;
-import net.minecraft.text.Text;
-
 import java.util.List;
 import java.util.Objects;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.Ingredient;
 
 public interface GenericIngredient<I extends GenericIngredient<I, M>, M extends GenericRecipe.MatchResult<I, M>> {
     /**
@@ -36,14 +35,14 @@ public interface GenericIngredient<I extends GenericIngredient<I, M>, M extends 
         return false;
     }
 
-    default void present(final NbtCompound nbt) {}
+    default void present(final CompoundTag nbt) {}
 
-    default void absent(final NbtCompound nbt) {}
+    default void absent(final CompoundTag nbt) {}
 
     default ImmutableList<ItemStack> getMatchingSubtypes(final Ingredient stack) {
         Objects.requireNonNull(stack, "stack");
-        return ImmutableList.copyOf(stack.getMatchingStacks());
+        return ImmutableList.copyOf(stack.getItems());
     }
 
-    default void addTooltip(final List<Text> tooltip) {}
+    default void addTooltip(final List<Component> tooltip) {}
 }

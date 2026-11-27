@@ -1,6 +1,8 @@
 package de.lucalabs.fairylights.events;
 
 import com.google.common.collect.Sets;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.collision.Collidable;
 import de.lucalabs.fairylights.collision.Intersection;
 import de.lucalabs.fairylights.components.FairyLightComponents;
@@ -13,30 +15,33 @@ import de.lucalabs.fairylights.fastener.FastenerType;
 import de.lucalabs.fairylights.net.serverbound.InteractionConnectionMessage;
 import de.lucalabs.fairylights.renderer.RenderConstants;
 import de.lucalabs.fairylights.util.Curve;
-import dev.onyxstudios.cca.api.v3.component.ComponentAccess;
+import org.ladysnake.cca.api.v3.component.ComponentAccess;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.render.*;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.listener.ClientPlayPacketListener;
-import net.minecraft.network.packet.Packet;
-import net.minecraft.util.ActionResult;
-import net.minecraft.util.Hand;
-import net.minecraft.util.hit.EntityHitResult;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.chunk.ChunkManager;
-import net.minecraft.world.chunk.WorldChunk;
+import net.minecraft.client.Camera;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.*;
+import net.minecraft.client.renderer.LevelRenderer;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.protocol.Packet;
+import net.minecraft.network.protocol.game.ClientGamePacketListener;
+import net.minecraft.util.Mth;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.world.level.chunk.LevelChunk;
+import net.minecraft.world.phys.AABB;
+import net.minecraft.world.phys.EntityHitResult;
+import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
@@ -51,32 +56,32 @@ public final class ClientEventHandler {
             final Entity entity,
             final Camera camera,
             final float tickDelta,
-            final MatrixStack matrix,
-            final VertexConsumerProvider buf) {
+            final PoseStack matrix,
+            final MultiBufferSource buf) {
 
-        Vec3d pos = camera.getPos();
+        Vec3 pos = camera.getPosition();
 
         if (entity instanceof FenceFastenerEntity) {
             drawFenceFastenerHighlight(
                     (FenceFastenerEntity) entity,
                     matrix,
-                    buf.getBuffer(RenderLayer.getLines()),
+                    buf.getBuffer(RenderType.lines()),
                     tickDelta,
                     pos.x,
                     pos.y,
                     pos.z);
         } else if (entity instanceof final HitConnection hit) {
             if (hit.result.intersection.featureType() == Connection.CORD_FEATURE) {
-                matrix.push();
-                final Vec3d p = hit.result.connection.getFastener().getConnectionPoint();
+                matrix.pushPose();
+                final Vec3 p = hit.result.connection.getFastener().getConnectionPoint();
                 matrix.translate(p.x - pos.x, p.y - pos.y, p.z - pos.z);
-                renderHighlight(hit.result.connection, matrix, buf.getBuffer(RenderLayer.getLines()));
-                matrix.pop();
+                renderHighlight(hit.result.connection, matrix, buf.getBuffer(RenderType.lines()));
+                matrix.popPose();
             } else {
-                final Box bb = hit.result.intersection.hitBox().offset(-pos.x, -pos.y, -pos.z).expand(0.002D);
-                WorldRenderer.drawBox(
+                final AABB bb = hit.result.intersection.hitBox().offset(-pos.x, -pos.y, -pos.z).expand(0.002D);
+                LevelRenderer.renderLineBox(
                         matrix,
-                        buf.getBuffer(RenderLayer.getLines()),
+                        buf.getBuffer(RenderType.lines()),
                         bb,
                         0.0F,
                         0.0F,
@@ -88,7 +93,7 @@ public final class ClientEventHandler {
 
     private static void drawFenceFastenerHighlight(
             final FenceFastenerEntity fence,
-            final MatrixStack matrix,
+            final PoseStack matrix,
             final VertexConsumer buf,
             final float delta,
             final double dx,
@@ -96,15 +101,15 @@ public final class ClientEventHandler {
             final double dz) {
 
 
-        final PlayerEntity player = MinecraftClient.getInstance().player;
+        final Player player = Minecraft.getInstance().player;
         // Check if the server will allow interaction
-        if (player != null && (player.canSee(fence) || player.squaredDistanceTo(fence) <= 9.0D)) {
-            final Box selection = fence.getBoundingBox().offset(-dx, -dy, -dz).expand(0.002D);
-            WorldRenderer.drawBox(matrix, buf, selection, 0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA);
+        if (player != null && (player.hasLineOfSight(fence) || player.distanceToSqr(fence) <= 9.0D)) {
+            final AABB selection = fence.getBoundingBox().offset(-dx, -dy, -dz).expand(0.002D);
+            LevelRenderer.renderLineBox(matrix, buf, selection, 0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA);
         }
     }
 
-    private static void renderHighlight(final Connection connection, final MatrixStack matrix, final VertexConsumer buf) {
+    private static void renderHighlight(final Connection connection, final PoseStack matrix, final VertexConsumer buf) {
         final Curve cat = connection.getCatenary();
         if (cat == null) {
             return;
@@ -142,7 +147,7 @@ public final class ClientEventHandler {
 
     @Nullable
     public static Connection getHitConnection() {
-        final net.minecraft.util.hit.HitResult result = MinecraftClient.getInstance().crosshairTarget;
+        final net.minecraft.world.phys.HitResult result = Minecraft.getInstance().hitResult;
         if (result instanceof EntityHitResult) {
             final Entity entity = ((EntityHitResult) result).getEntity();
             if (entity instanceof HitConnection) {
@@ -153,21 +158,21 @@ public final class ClientEventHandler {
     }
 
     @Nullable
-    private static HitResult getHitConnection(final World world, final Entity viewer) {
-        final Box bounds = new Box(viewer.getBlockPos()).expand(Connection.MAX_LENGTH + 1.0D);
+    private static HitResult getHitConnection(final Level world, final Entity viewer) {
+        final AABB bounds = new AABB(viewer.blockPosition()).inflate(Connection.MAX_LENGTH + 1.0D);
         final Set<Fastener<?>> fasteners = collectFasteners(world, bounds);
         return getHitConnection(viewer, bounds, fasteners);
     }
 
     @Nullable
-    private static HitResult getHitConnection(final Entity viewer, final Box bounds, final Set<Fastener<?>> fasteners) {
+    private static HitResult getHitConnection(final Entity viewer, final AABB bounds, final Set<Fastener<?>> fasteners) {
         if (fasteners.isEmpty()) {
             return null;
         }
-        final Vec3d origin = viewer.getCameraPosVec(1);
-        final Vec3d look = viewer.getRotationVector();
-        final double reach = MinecraftClient.getInstance().interactionManager.getReachDistance();
-        final Vec3d end = origin.add(look.x * reach, look.y * reach, look.z * reach);
+        final Vec3 origin = viewer.getEyePosition(1);
+        final Vec3 look = viewer.getLookAngle();
+        final double reach = Minecraft.getInstance().gameMode.getPickRange();
+        final Vec3 end = origin.add(look.x * reach, look.y * reach, look.z * reach);
         Connection found = null;
         Intersection rayTrace = null;
         double distance = Double.MAX_VALUE;
@@ -195,32 +200,32 @@ public final class ClientEventHandler {
     }
 
     public static void updateHitConnection() {
-        final MinecraftClient mc = MinecraftClient.getInstance();
+        final Minecraft mc = Minecraft.getInstance();
         final Entity viewer = mc.getCameraEntity();
-        if (mc.crosshairTarget != null && mc.world != null && viewer != null) {
-            final HitResult result = getHitConnection(mc.world, viewer);
+        if (mc.hitResult != null && mc.level != null && viewer != null) {
+            final HitResult result = getHitConnection(mc.level, viewer);
             if (result != null) {
-                final Vec3d eyes = viewer.getCameraPosVec(1.0F);
-                if (result.intersection.result().distanceTo(eyes) < mc.crosshairTarget.getPos().distanceTo(eyes)) {
-                    mc.crosshairTarget = new EntityHitResult(new HitConnection(mc.world, result));
-                    mc.targetedEntity = null;
+                final Vec3 eyes = viewer.getEyePosition(1.0F);
+                if (result.intersection.result().distanceTo(eyes) < mc.hitResult.getLocation().distanceTo(eyes)) {
+                    mc.hitResult = new EntityHitResult(new HitConnection(mc.level, result));
+                    mc.crosshairPickEntity = null;
                 }
             }
         }
     }
 
-    private static Set<Fastener<?>> collectFasteners(final World world, final Box bounds) {
+    private static Set<Fastener<?>> collectFasteners(final Level world, final AABB bounds) {
         final Set<Fastener<?>> fasteners = Sets.newLinkedHashSet();
-        world.getNonSpectatingEntities(FenceFastenerEntity.class, bounds)
+        world.getEntitiesOfClass(FenceFastenerEntity.class, bounds)
                 .forEach(e -> collectFastenersAttachedToEntity(e, bounds, fasteners));
-        final int minX = MathHelper.floor(bounds.minX / 16.0D);
-        final int maxX = MathHelper.ceil(bounds.maxX / 16.0D);
-        final int minZ = MathHelper.floor(bounds.minZ / 16.0D);
-        final int maxZ = MathHelper.ceil(bounds.maxZ / 16.0D);
-        final ChunkManager provider = world.getChunkManager();
+        final int minX = Mth.floor(bounds.minX / 16.0D);
+        final int maxX = Mth.ceil(bounds.maxX / 16.0D);
+        final int minZ = Mth.floor(bounds.minZ / 16.0D);
+        final int maxZ = Mth.ceil(bounds.maxZ / 16.0D);
+        final ChunkSource provider = world.getChunkSource();
         for (int x = minX; x < maxX; x++) {
             for (int z = minZ; z < maxZ; z++) {
-                final WorldChunk chunk = provider.getWorldChunk(x, z, false);
+                final LevelChunk chunk = provider.getChunk(x, z, false);
                 if (chunk != null) {
                     try {
                         for (final BlockEntity e : chunk.getBlockEntities().values()) {
@@ -235,7 +240,7 @@ public final class ClientEventHandler {
         return fasteners;
     }
 
-    private static void collectFastenersAttachedToEntity(final ComponentAccess e, final Box bounds, Set<Fastener<?>> fasteners) {
+    private static void collectFastenersAttachedToEntity(final ComponentAccess e, final AABB bounds, Set<Fastener<?>> fasteners) {
         FairyLightComponents.FASTENER.maybeGet(e).flatMap(GenericComponent::get).ifPresent(f -> {
             if (bounds.contains(f.getConnectionPoint())) {
                 fasteners.add(f);
@@ -252,7 +257,7 @@ public final class ClientEventHandler {
         final Vector3f side = new Vector3f();
         // if collinear
         if (v1.dot(v2) < -(1.0F - 1.0e-2F)) {
-            final float h = MathHelper.sqrt(v1.x() * v1.x() + v1.z() * v1.z());
+            final float h = Mth.sqrt(v1.x() * v1.x() + v1.z() * v1.z());
             // if vertical
             if (h < 1.0e-2F) {
                 up.set(-1.0F, 0.0F, 0.0F);
@@ -275,11 +280,11 @@ public final class ClientEventHandler {
     }
 
     static class LineBuilder {
-        final MatrixStack matrix;
+        final PoseStack matrix;
         final VertexConsumer buf;
         Vector3f last;
 
-        LineBuilder(MatrixStack matrix, VertexConsumer buf) {
+        LineBuilder(PoseStack matrix, VertexConsumer buf) {
             this.matrix = matrix;
             this.buf = buf;
         }
@@ -291,15 +296,15 @@ public final class ClientEventHandler {
                 Vector3f n = new Vector3f(pos);
                 n.sub(this.last);
                 n.normalize();
-                n = this.matrix.peek().getNormalMatrix().transform(n);
-                this.buf.vertex(this.matrix.peek().getPositionMatrix(), this.last.x(), this.last.y(), this.last.z())
+                n = this.matrix.last().normal().transform(n);
+                this.buf.vertex(this.matrix.last().pose(), this.last.x(), this.last.y(), this.last.z())
                         .color(0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA)
                         .normal(n.x(), n.y(), n.z())
-                        .next();
-                this.buf.vertex(this.matrix.peek().getPositionMatrix(), pos.x(), pos.y(), pos.z())
+                        .endVertex();
+                this.buf.vertex(this.matrix.last().pose(), pos.x(), pos.y(), pos.z())
                         .color(0.0F, 0.0F, 0.0F, RenderConstants.HIGHLIGHT_ALPHA)
                         .normal(n.x(), n.y(), n.z())
-                        .next();
+                        .endVertex();
                 this.last = null;
             }
         }
@@ -308,16 +313,16 @@ public final class ClientEventHandler {
     static class HitConnection extends Entity {
         final ClientEventHandler.HitResult result;
 
-        HitConnection(final World world, final ClientEventHandler.HitResult result) {
+        HitConnection(final Level world, final ClientEventHandler.HitResult result) {
             super(EntityType.ITEM, world);
             this.setId(-1);
             this.result = result;
-            this.setPosition(result.intersection.result());
+            this.setPos(result.intersection.result());
         }
 
         @Override
-        public boolean damage(final DamageSource source, final float amount) {
-            if (source.getAttacker() == MinecraftClient.getInstance().player) {
+        public boolean hurt(final DamageSource source, final float amount) {
+            if (source.getEntity() == Minecraft.getInstance().player) {
                 this.processAction(PlayerAction.ATTACK);
                 return true;
             }
@@ -325,10 +330,10 @@ public final class ClientEventHandler {
         }
 
         @Override
-        public ActionResult interact(final PlayerEntity player, final Hand hand) {
-            if (player == MinecraftClient.getInstance().player) {
+        public InteractionResult interact(final Player player, final InteractionHand hand) {
+            if (player == Minecraft.getInstance().player) {
                 this.processAction(PlayerAction.INTERACT);
-                return ActionResult.SUCCESS;
+                return InteractionResult.SUCCESS;
             }
             return super.interact(player, hand);
         }
@@ -346,32 +351,32 @@ public final class ClientEventHandler {
 
         // TODO check if that does the same as the method above
         @Override
-        public ItemStack getPickBlockStack() {
+        public ItemStack getPickResult() {
             return this.result.connection.getItemStack();
         }
 
         @Override
-        protected void initDataTracker() {
+        protected void defineSynchedData() {
         }
 
         @Override
-        protected void writeCustomDataToNbt(final NbtCompound compound) {
+        protected void addAdditionalSaveData(final CompoundTag compound) {
         }
 
         @Override
-        protected void readCustomDataFromNbt(final NbtCompound compound) {
+        protected void readAdditionalSaveData(final CompoundTag compound) {
         }
 
         @Override
-        public Packet<ClientPlayPacketListener> createSpawnPacket() {
+        public Packet<ClientGamePacketListener> getAddEntityPacket() {
             return new Packet<>() {
                 @Override
-                public void write(final PacketByteBuf buf) {
+                public void write(final FriendlyByteBuf buf) {
 
                 }
 
                 @Override
-                public void apply(final ClientPlayPacketListener p_131342_) {
+                public void apply(final ClientGamePacketListener p_131342_) {
 
                 }
             };

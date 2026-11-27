@@ -2,10 +2,10 @@ package de.lucalabs.fairylights.feature.light;
 
 import de.lucalabs.fairylights.util.CubicBezier;
 import de.lucalabs.fairylights.util.MathHelper;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 
 public class TwinkleBehavior implements BrightnessLightBehavior {
     private static final CubicBezier EASE_IN_OUT = new CubicBezier(0.4F, 0, 0.6F, 1);
@@ -19,7 +19,7 @@ public class TwinkleBehavior implements BrightnessLightBehavior {
     }
 
     public static boolean exists(final ItemStack stack) {
-        final NbtCompound tag = stack.getNbt();
+        final CompoundTag tag = stack.getTag();
         return tag != null && tag.getBoolean("twinkle");
     }
 
@@ -38,7 +38,7 @@ public class TwinkleBehavior implements BrightnessLightBehavior {
     }
 
     @Override
-    public void tick(final World world, final Vec3d origin, final Light<?> light) {
+    public void tick(final Level world, final Vec3 origin, final Light<?> light) {
         this.logic.tick(world.random, this.powered);
     }
 }

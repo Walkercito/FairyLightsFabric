@@ -13,12 +13,11 @@ import mezz.jei.api.gui.ingredient.ICraftingGridHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.category.extensions.vanilla.crafting.ICraftingCategoryExtension;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.inventory.CraftingInventory;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.screen.ScreenHandler;
-
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.inventory.TransientCraftingContainer;
+import net.minecraft.world.item.ItemStack;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -100,21 +99,21 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
     }
 
     private void forOutputMatches(final BiConsumer<ItemStack, ItemStack> outputConsumer) {
-        final RecipeInputInventory crafting = new CraftingInventory(new ScreenHandler(null, 0) {
+        final CraftingContainer crafting = new TransientCraftingContainer(new AbstractContainerMenu(null, 0) {
             @Override
-            public ItemStack quickMove(PlayerEntity p_38941_, int p_38942_) {
+            public ItemStack quickMoveStack(Player p_38941_, int p_38942_) {
                 return ItemStack.EMPTY;
             }
 
             @Override
-            public boolean canUse(PlayerEntity player) {
+            public boolean stillValid(Player player) {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
         if (this.subtypeIndex == -1) {
             for (int i = 0; i < this.minimalInputStacks.size(); i++) {
                 final List<ItemStack> stacks = this.minimalInputStacks.get(i);
-                crafting.setStack(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
+                crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
             }
             if (this.recipe.matches(crafting, null)) {
                 outputConsumer.accept(ItemStack.EMPTY, this.recipe.craft(crafting, null));
@@ -122,13 +121,13 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
         } else {
             final List<ItemStack> dictators = this.minimalInputStacks.get(this.subtypeIndex);
             for (final ItemStack subtype : dictators) {
-                crafting.clear();
+                crafting.clearContent();
                 for (int i = 0; i < this.minimalInputStacks.size(); i++) {
                     if (i == this.subtypeIndex) {
-                        crafting.setStack(i, subtype);
+                        crafting.setItem(i, subtype);
                     } else {
                         final List<ItemStack> stacks = this.minimalInputStacks.get(i);
-                        crafting.setStack(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
+                        crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
                     }
                 }
                 if (this.recipe.matches(crafting, null)) {
@@ -198,14 +197,14 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
     }
 
     private Input getInputsForIngredient(final ItemStack ingredient) {
-        final RecipeInputInventory crafting = new CraftingInventory(new ScreenHandler(null, 0) {
+        final CraftingContainer crafting = new TransientCraftingContainer(new AbstractContainerMenu(null, 0) {
             @Override
-            public ItemStack quickMove(PlayerEntity p_38941_, int p_38942_) {
+            public ItemStack quickMoveStack(Player p_38941_, int p_38942_) {
                 return ItemStack.EMPTY;
             }
 
             @Override
-            public boolean canUse(PlayerEntity player) {
+            public boolean stillValid(Player player) {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
@@ -222,10 +221,10 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
             if (matched == null) {
                 continue;
             }
-            crafting.clear();
+            crafting.clearContent();
             for (int n = 0; n < this.minimalInputStacks.size(); n++) {
                 final List<ItemStack> stacks = this.minimalInputStacks.get(n);
-                crafting.setStack(n, i == n ? matched : stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
+                crafting.setItem(n, i == n ? matched : stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(0));
             }
             if (this.recipe.matches(crafting, null)) {
                 final List<List<ItemStack>> inputs = new ArrayList<>(this.allInputs.size());
@@ -240,14 +239,14 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
     }
 
     public List<ItemStack> getOutput(final List<List<ItemStack>> inputs) {
-        final RecipeInputInventory crafting = new CraftingInventory(new ScreenHandler(null, 0) {
+        final CraftingContainer crafting = new TransientCraftingContainer(new AbstractContainerMenu(null, 0) {
             @Override
-            public ItemStack quickMove(PlayerEntity p_38941_, int p_38942_) {
+            public ItemStack quickMoveStack(Player p_38941_, int p_38942_) {
                 return ItemStack.EMPTY;
             }
 
             @Override
-            public boolean canUse(PlayerEntity player) {
+            public boolean stillValid(Player player) {
                 return true;
             }
         }, this.getWidth(), this.getHeight());
@@ -264,7 +263,7 @@ public final class GenericRecipeWrapper implements ICraftingCategoryExtension {
         for (int n = 0; n < size; n++) {
             for (int i = 0; i < inputs.size(); i++) {
                 final List<ItemStack> stacks = inputs.get(i);
-                crafting.setStack(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(n % stacks.size()));
+                crafting.setItem(i, stacks.isEmpty() ? ItemStack.EMPTY : stacks.get(n % stacks.size()));
             }
 
             if (this.recipe.matches(crafting, null)) {

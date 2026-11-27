@@ -1,12 +1,12 @@
 package de.lucalabs.fairylights.util;
 
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.text.Text;
-import net.minecraft.util.Language;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
+import net.minecraft.locale.Language;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
 
 public final class Utils {
     private Utils() {}
@@ -16,21 +16,21 @@ public final class Utils {
         return values[ordinal < 0 || ordinal >= values.length ? 0 : ordinal];
     }
 
-    public static Text formatRecipeTooltip(final String key) {
-        return formatRecipeTooltipValue(Language.getInstance().get(key));
+    public static Component formatRecipeTooltip(final String key) {
+        return formatRecipeTooltipValue(Language.getInstance().getOrDefault(key));
     }
 
-    private static Text formatRecipeTooltipValue(final String value) {
-        return Text.translatable("recipe.ingredient.tooltip", value);
+    private static Component formatRecipeTooltipValue(final String value) {
+        return Component.translatable("recipe.ingredient.tooltip", value);
     }
 
-    public static boolean impliesNbt(@Nullable NbtElement antecedent, @Nullable NbtElement consequent) {
+    public static boolean impliesNbt(@Nullable Tag antecedent, @Nullable Tag consequent) {
         if (antecedent == consequent) return true;
         if ((antecedent == null) != (consequent == null)) return false;
         if (!antecedent.getClass().equals(consequent.getClass())) return false;
-        if (antecedent instanceof NbtCompound) {
-            for (String key : ((NbtCompound) antecedent).getKeys()) {
-                if (!impliesNbt(((NbtCompound) antecedent).get(key), ((NbtCompound) consequent).get(key))) {
+        if (antecedent instanceof CompoundTag) {
+            for (String key : ((CompoundTag) antecedent).getAllKeys()) {
+                if (!impliesNbt(((CompoundTag) antecedent).get(key), ((CompoundTag) consequent).get(key))) {
                     return false;
                 }
             }

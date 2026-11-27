@@ -4,12 +4,11 @@ import de.lucalabs.fairylights.fastener.accessor.BlockFastenerAccessor;
 import de.lucalabs.fairylights.fastener.accessor.FastenerAccessor;
 import de.lucalabs.fairylights.fastener.accessor.FenceFastenerAccessor;
 import de.lucalabs.fairylights.fastener.accessor.PlayerFastenerAccessor;
-import net.minecraft.nbt.NbtCompound;
-
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Supplier;
+import net.minecraft.nbt.CompoundTag;
 
 public enum FastenerType {
     BLOCK(BlockFastenerAccessor::new),
@@ -37,14 +36,14 @@ public enum FastenerType {
         return this.supplier.get();
     }
 
-    public static NbtCompound serialize(final FastenerAccessor accessor) {
-        final NbtCompound compound = new NbtCompound();
+    public static CompoundTag serialize(final FastenerAccessor accessor) {
+        final CompoundTag compound = new CompoundTag();
         compound.putString("type", accessor.getType().name);
         compound.put("data", accessor.serialize());
         return compound;
     }
 
-    public static FastenerAccessor deserialize(final NbtCompound compound) {
+    public static FastenerAccessor deserialize(final CompoundTag compound) {
         final FastenerAccessor accessor = NAME_TO_TYPE.get(compound.getString("type")).createAccessor();
         accessor.deserialize(compound.getCompound("data"));
         return accessor;

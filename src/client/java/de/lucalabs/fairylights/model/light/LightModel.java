@@ -1,17 +1,17 @@
 package de.lucalabs.fairylights.model.light;
 
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import de.lucalabs.fairylights.feature.light.Light;
 import de.lucalabs.fairylights.feature.light.LightBehavior;
 import de.lucalabs.fairylights.util.BoxBuilder;
 import net.minecraft.client.model.Model;
-import net.minecraft.client.model.ModelData;
-import net.minecraft.client.model.ModelPart;
-import net.minecraft.client.model.TexturedModelData;
-import net.minecraft.client.render.RenderLayer;
-import net.minecraft.client.render.VertexConsumer;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.util.math.Box;
-import net.minecraft.util.math.MathHelper;
+import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.model.geom.builders.LayerDefinition;
+import net.minecraft.client.model.geom.builders.MeshDefinition;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.util.Mth;
+import net.minecraft.world.phys.AABB;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Quaternionf;
 
@@ -30,14 +30,14 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     protected float blue = 1.0F;
 
     @Nullable
-    private Box bounds;
+    private AABB bounds;
 
     private double floorOffset = Double.NaN;
 
     private boolean powered;
 
     public LightModel(ModelPart root) {
-        super(RenderLayer::getEntityTranslucent);
+        super(RenderType::entityTranslucent);
         this.lit = root.getChild("lit");
         this.litTint = root.getChild("lit_tint");
         this.litTintGlow = root.getChild("lit_tint_glow");
@@ -49,8 +49,8 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
             return new BulbBuilder(this.litTint(), this.litTintGlow());
         }
 
-        public TexturedModelData build() {
-            ModelData def = new ModelData();
+        public LayerDefinition build() {
+            MeshDefinition def = new MeshDefinition();
             this.lit().build(def.getRoot());
             this.litTint().build(def.getRoot());
             this.litTintGlow().build(def.getRoot());
@@ -58,7 +58,7 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
             for (EasyMeshBuilder builder : this.extra()) {
                 builder.build(def.getRoot());
             }
-            return TexturedModelData.of(def, 128, 128);
+            return LayerDefinition.create(def, 128, 128);
         }
 
         public EasyMeshBuilder parented(final String name) {
@@ -82,11 +82,11 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         }
     }
 
-    public Box getBounds() {
+    public AABB getBounds() {
         if (this.bounds == null) {
-            final MatrixStack matrix = new MatrixStack();
+            final PoseStack matrix = new PoseStack();
             final BoxVertexBuilder builder = new BoxVertexBuilder();
-            this.render(matrix, builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.renderToBuffer(matrix, builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
             this.renderTranslucent(matrix, builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
             this.bounds = builder.build();
         }
@@ -96,7 +96,7 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     public double getFloorOffset() {
         if (Double.isNaN(this.floorOffset)) {
             final BoxVertexBuilder builder = new BoxVertexBuilder();
-            this.render(new MatrixStack(), builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
+            this.renderToBuffer(new PoseStack(), builder, 0, 0, 1.0F, 1.0F, 1.0F, 1.0F);
             this.floorOffset = builder.build().minY-this.getBounds().minY;
         }
         return this.floorOffset;
@@ -107,8 +107,8 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
     }
 
     @Override
-    public void render(
-            final MatrixStack matrix,
+    public void renderToBuffer(
+            final PoseStack matrix,
             final VertexConsumer builder,
             final int light,
             final int overlay,
@@ -123,7 +123,7 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         this.litTint.render(matrix, builder, emissiveLight, overlay, r * this.red, g * this.green, b * this.blue, a);
     }
 
-    public void renderTranslucent(final MatrixStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
+    public void renderTranslucent(final PoseStack matrix, final VertexConsumer builder, final int light, final int overlay, final float r, final float g, final float b, final float a) {
         final float v = this.brightness;
         this.litTintGlow.render(matrix, builder, this.getLight(light), overlay, r * this.red * v + (1.0F - v), g * this.green * v + (1.0F - v), b * this.blue * v + (1.0F - v), v * 0.15F + 0.2F);
     }
@@ -140,9 +140,9 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         final float r31 = 2.0F * (q.y() * q.z() + q.w() * q.x());
         final float r32 = q.w() * q.w() - q.x() * q.x() - q.y() * q.y() + q.z() * q.z();
         return new float[]{
-                (float) MathHelper.atan2(r31, r32),
+                (float) Mth.atan2(r31, r32),
                 (float) Math.asin(r21),
-                (float) MathHelper.atan2(r11, r12)
+                (float) Mth.atan2(r11, r12)
         };
     }
 
@@ -161,17 +161,17 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         }
 
         @Override
-        public VertexConsumer texture(float u, float v) {
+        public VertexConsumer uv(float u, float v) {
             return this;
         }
 
         @Override
-        public VertexConsumer overlay(int u, int v) {
+        public VertexConsumer overlayCoords(int u, int v) {
             return this;
         }
 
         @Override
-        public VertexConsumer light(int u, int v) {
+        public VertexConsumer uv2(int u, int v) {
             return this;
         }
 
@@ -181,18 +181,18 @@ public abstract class LightModel<T extends LightBehavior> extends Model {
         }
 
         @Override
-        public void next() {
+        public void endVertex() {
         }
 
         @Override
-        public void fixedColor(int r, int g, int b, int a) {
+        public void defaultColor(int r, int g, int b, int a) {
         }
 
         @Override
-        public void unfixColor() {
+        public void unsetDefaultColor() {
         }
 
-        Box build() {
+        AABB build() {
             return this.builder.build();
         }
     }

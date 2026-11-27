@@ -5,17 +5,16 @@ import de.lucalabs.fairylights.blocks.FairyLightBlocks;
 import de.lucalabs.fairylights.blocks.FastenerBlock;
 import de.lucalabs.fairylights.components.FairyLightComponents;
 import de.lucalabs.fairylights.fastener.Fastener;
-import dev.onyxstudios.cca.internal.base.asm.StaticComponentLoadingException;
-import net.minecraft.block.BlockState;
-import net.minecraft.block.entity.BlockEntity;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.network.packet.s2c.play.BlockEntityUpdateS2CPacket;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.Direction;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-
+import org.ladysnake.cca.internal.base.asm.StaticComponentLoadingException;
 import java.util.Optional;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 
 public final class FastenerBlockEntity extends BlockEntity {
     public FastenerBlockEntity(final BlockPos pos, final BlockState state) {
@@ -28,46 +27,46 @@ public final class FastenerBlockEntity extends BlockEntity {
 //        return this.getFastener().map(fastener -> fastener.getBounds().expand(1)).orElseGet(() -> ForgeRendering.getRenderBoundingBox(this));
 //    }
 
-    public static void tick(World world, BlockPos pos, BlockState state, FastenerBlockEntity be) {
+    public static void tick(Level world, BlockPos pos, BlockState state, FastenerBlockEntity be) {
         be.getFastener().ifPresent(fastener -> {
-            if (!world.isClient() && fastener.hasNoConnections()) {
+            if (!world.isClientSide() && fastener.hasNoConnections()) {
                 world.removeBlock(pos, false);
-            } else if (!world.isClient() && fastener.update()) {
-                be.markDirty();
-                world.updateListeners(pos, state, state, 3);
+            } else if (!world.isClientSide() && fastener.update()) {
+                be.setChanged();
+                world.sendBlockUpdated(pos, state, state, 3);
             }
         });
     }
 
-    public static void tickClient(World level, BlockPos pos, BlockState state, FastenerBlockEntity be) {
+    public static void tickClient(Level level, BlockPos pos, BlockState state, FastenerBlockEntity be) {
         be.getFastener().ifPresent(Fastener::update);
     }
 
-    public Vec3d getOffset() {
+    public Vec3 getOffset() {
         return FairyLightBlocks.FASTENER.getOffset(this.getFacing(), 0.125F);
     }
 
     public Direction getFacing() {
-        final BlockState state = this.world.getBlockState(this.pos);
+        final BlockState state = this.level.getBlockState(this.worldPosition);
         if (state.getBlock() != FairyLightBlocks.FASTENER) {
             return Direction.UP;
         }
-        return state.get(FastenerBlock.FACING);
+        return state.getValue(FastenerBlock.FACING);
     }
 
     @Override
-    public BlockEntityUpdateS2CPacket toUpdatePacket() {
-        return BlockEntityUpdateS2CPacket.create(this);
+    public ClientboundBlockEntityDataPacket getUpdatePacket() {
+        return ClientboundBlockEntityDataPacket.create(this);
     }
 
     @Override
-    public NbtCompound toInitialChunkDataNbt() {
-        return this.createNbt();
+    public CompoundTag getUpdateTag() {
+        return this.saveWithoutMetadata();
     }
 
     @Override
-    public void setWorld(final World world) {
-        super.setWorld(world);
+    public void setLevel(final Level world) {
+        super.setLevel(world);
         this.getFastener().ifPresent(fastener -> fastener.setWorld(world));
     }
 

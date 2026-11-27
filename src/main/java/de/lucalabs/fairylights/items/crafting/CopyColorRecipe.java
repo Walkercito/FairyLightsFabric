@@ -2,27 +2,27 @@ package de.lucalabs.fairylights.items.crafting;
 
 import de.lucalabs.fairylights.items.DyeableItem;
 import de.lucalabs.fairylights.util.Tags;
-import net.minecraft.inventory.RecipeInputInventory;
-import net.minecraft.item.ItemStack;
-import net.minecraft.recipe.RecipeSerializer;
-import net.minecraft.recipe.SpecialCraftingRecipe;
-import net.minecraft.recipe.book.CraftingRecipeCategory;
-import net.minecraft.registry.DynamicRegistryManager;
-import net.minecraft.util.Identifier;
-import net.minecraft.util.collection.DefaultedList;
-import net.minecraft.world.World;
+import net.minecraft.core.NonNullList;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.crafting.CraftingBookCategory;
+import net.minecraft.world.item.crafting.CustomRecipe;
+import net.minecraft.world.item.crafting.RecipeSerializer;
+import net.minecraft.world.level.Level;
 
-public class CopyColorRecipe extends SpecialCraftingRecipe {
-    public CopyColorRecipe(final Identifier id, CraftingRecipeCategory category) {
+public class CopyColorRecipe extends CustomRecipe {
+    public CopyColorRecipe(final Identifier id, CraftingBookCategory category) {
         super(id, category);
     }
 
     @Override
-    public boolean matches(final RecipeInputInventory inv, final World world) {
+    public boolean matches(final CraftingContainer inv, final Level world) {
         int count = 0;
-        for (int i = 0; i < inv.size(); i++) {
-            final ItemStack stack = inv.getStack(i);
-            if (!stack.isEmpty() && (!stack.isIn(Tags.DYEABLE) || count++ >= 2)) {
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            final ItemStack stack = inv.getItem(i);
+            if (!stack.isEmpty() && (!stack.is(Tags.DYEABLE) || count++ >= 2)) {
                 return false;
             }
         }
@@ -30,12 +30,12 @@ public class CopyColorRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public ItemStack craft(final RecipeInputInventory inv, final DynamicRegistryManager registryAccess) {
+    public ItemStack craft(final CraftingContainer inv, final RegistryAccess registryAccess) {
         ItemStack original = ItemStack.EMPTY;
-        for (int i = 0; i < inv.size(); i++) {
-            final ItemStack stack = inv.getStack(i);
+        for (int i = 0; i < inv.getContainerSize(); i++) {
+            final ItemStack stack = inv.getItem(i);
             if (!stack.isEmpty()) {
-                if (stack.isIn(Tags.DYEABLE)) {
+                if (stack.is(Tags.DYEABLE)) {
                     if (original.isEmpty()) {
                         original = stack;
                     } else {
@@ -53,14 +53,14 @@ public class CopyColorRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public DefaultedList<ItemStack> getRemainder(final RecipeInputInventory inv) {
+    public NonNullList<ItemStack> getRemainder(final CraftingContainer inv) {
         ItemStack original = ItemStack.EMPTY;
-        final DefaultedList<ItemStack> remaining = DefaultedList.ofSize(inv.size(), ItemStack.EMPTY);
+        final NonNullList<ItemStack> remaining = NonNullList.withSize(inv.getContainerSize(), ItemStack.EMPTY);
         for (int i = 0; i < remaining.size(); i++) {
-            final ItemStack stack = inv.getStack(i);
-            if (stack.getItem().hasRecipeRemainder()) {
+            final ItemStack stack = inv.getItem(i);
+            if (stack.getItem().hasCraftingRemainingItem()) {
                 remaining.set(i, stack.getItem().getRecipeRemainder(stack));
-            } else if (original.isEmpty() && !stack.isEmpty() && stack.isIn(Tags.DYEABLE)) {
+            } else if (original.isEmpty() && !stack.isEmpty() && stack.is(Tags.DYEABLE)) {
                 final ItemStack rem = stack.copy();
                 rem.setCount(1);
                 remaining.set(i, rem);
@@ -71,7 +71,7 @@ public class CopyColorRecipe extends SpecialCraftingRecipe {
     }
 
     @Override
-    public boolean fits(final int width, final int height) {
+    public boolean canCraftInDimensions(final int width, final int height) {
         return width * height >= 2;
     }
 

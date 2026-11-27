@@ -2,45 +2,44 @@ package de.lucalabs.fairylights.items;
 
 import de.lucalabs.fairylights.connection.ConnectionTypes;
 import de.lucalabs.fairylights.util.styled.StyledString;
-import net.minecraft.client.item.TooltipContext;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.nbt.NbtElement;
-import net.minecraft.nbt.NbtList;
-import net.minecraft.text.Text;
-import net.minecraft.util.Formatting;
-import net.minecraft.world.World;
-
 import java.util.List;
+import net.minecraft.ChatFormatting;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
+import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.level.Level;
 
 public class PennantBuntingConnectionItem extends ConnectionItem {
-    public PennantBuntingConnectionItem(final Item.Settings properties) {
+    public PennantBuntingConnectionItem(final Item.Properties properties) {
         super(properties, ConnectionTypes.PENNANT_BUNTING);
     }
 
     @Override
-    public void appendTooltip(final ItemStack stack, final World world, final List<Text> tooltip, final TooltipContext flag) {
-        final NbtCompound compound = stack.getNbt();
+    public void appendHoverText(final ItemStack stack, final Level world, final List<Component> tooltip, final TooltipFlag flag) {
+        final CompoundTag compound = stack.getTag();
         if (compound == null) {
             return;
         }
-        if (compound.contains("text", NbtElement.COMPOUND_TYPE)) {
-            final NbtCompound text = compound.getCompound("text");
+        if (compound.contains("text", Tag.TAG_COMPOUND)) {
+            final CompoundTag text = compound.getCompound("text");
             final StyledString s = StyledString.deserialize(text);
             if (!s.isEmpty()) {
-                tooltip.add(Text.translatable("format.fairylights.text", s.toTextText()).formatted(Formatting.GRAY));
+                tooltip.add(Component.translatable("format.fairylights.text", s.toTextText()).withStyle(ChatFormatting.GRAY));
             }
         }
-        if (compound.contains("pattern", NbtElement.LIST_TYPE)) {
-            final NbtList tagList = compound.getList("pattern", NbtElement.COMPOUND_TYPE);
+        if (compound.contains("pattern", Tag.TAG_LIST)) {
+            final ListTag tagList = compound.getList("pattern", Tag.TAG_COMPOUND);
             final int tagCount = tagList.size();
             if (tagCount > 0) {
-                tooltip.add(Text.empty());
+                tooltip.add(Component.empty());
             }
             for (int i = 0; i < tagCount; i++) {
-                final ItemStack item = ItemStack.fromNbt(tagList.getCompound(i));
-                tooltip.add(item.getName());
+                final ItemStack item = ItemStack.of(tagList.getCompound(i));
+                tooltip.add(item.getHoverName());
             }
         }
     }
