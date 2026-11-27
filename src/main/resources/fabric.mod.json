@@ -29,9 +29,6 @@
 		],
 		"jei_mod_plugin": [
 			"de.lucalabs.fairylights.integrations.jei.FairyLightJeiPlugin"
-		],
-		"emi": [
-			"de.lucalabs.fairylights.integrations.emi.FairyLightEmiPlugin"
 		]
 	},
 	"mixins": [
@@ -47,15 +44,10 @@
 			"fairylights:light_variant"
 		]
 	},
-	"accessWidener": "fairylights.accesswidener",
 	"depends": {
-		"fabricloader": ">=0.16.10",
-		"fabric": "*",
+		"fabricloader": ">=0.18.4",
 		"fabric-api": "*",
-		"minecraft": "~1.20.1",
-		"java": ">=17"
-	},
-	"suggests": {
-		"another-mod": "*"
+		"minecraft": "~26.1",
+		"java": ">=25"
 	}
 }

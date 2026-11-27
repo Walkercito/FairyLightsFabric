@@ -1,7 +1,9 @@
+import com.modrinth.minotaur.dependencies.ModDependency
+
 plugins {
-	id 'fabric-loom' version '1.10-SNAPSHOT'
+	id 'net.fabricmc.fabric-loom' version "${loom_version}"
 	id 'maven-publish'
-	id "com.modrinth.minotaur" version "2.+"
+	id "com.modrinth.minotaur" version "2.10.0"
 }
 
 version = project.mod_version
@@ -17,7 +19,6 @@ repositories {
 		url = 'https://maven.ladysnake.org/releases'
 	}
 	maven { url "https://maven.blamejared.com/" }
-	maven { url "https://maven.terraformersmc.com/releases/" }
 }
 
 loom {
@@ -29,8 +30,6 @@ loom {
 			sourceSet sourceSets.client
 		}
 	}
-
-	accessWidenerPath = file("src/main/resources/fairylights.accesswidener")
 }
 
 fabricApi {
@@ -42,30 +41,24 @@ fabricApi {
 dependencies {
 	// To change the versions see the gradle.properties file
 	minecraft "com.mojang:minecraft:${project.minecraft_version}"
-	mappings "net.fabricmc:yarn:${project.yarn_mappings}:v2"
-	modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
+	implementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
 	// Fabric API. This is technically optional, but you probably want it anyway.
-	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
+	implementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}"
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}"
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-block:${project.cca_version}"
-	modImplementation "dev.onyxstudios.cardinal-components-api:cardinal-components-item:${project.cca_version}"
+	implementation "org.ladysnake.cardinal-components-api:cardinal-components-base:${project.cca_version}"
+	implementation "org.ladysnake.cardinal-components-api:cardinal-components-entity:${project.cca_version}"
+	implementation "org.ladysnake.cardinal-components-api:cardinal-components-block:${project.cca_version}"
+	implementation "org.ladysnake.cardinal-components-api:cardinal-components-item:${project.cca_version}"
 
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${project.cca_version}"
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${project.cca_version}"
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-block:${project.cca_version}"
-	include "dev.onyxstudios.cardinal-components-api:cardinal-components-item:${project.cca_version}"
+	include "org.ladysnake.cardinal-components-api:cardinal-components-base:${project.cca_version}"
+	include "org.ladysnake.cardinal-components-api:cardinal-components-entity:${project.cca_version}"
+	include "org.ladysnake.cardinal-components-api:cardinal-components-block:${project.cca_version}"
+	include "org.ladysnake.cardinal-components-api:cardinal-components-item:${project.cca_version}"
 
-	modCompileOnly("dev.emi:emi-fabric:${emi_version}+${project.minecraft_version}") { transitive = false }
-	if (project.enable_emi.toBoolean()) {
-		modLocalRuntime("dev.emi:emi-fabric:${emi_version}+${project.minecraft_version}") { transitive = false }
-	}
-
-	modCompileOnly("mezz.jei:jei-${project.minecraft_version}-fabric:${project.jei_version}") { transitive = false }
+	compileOnly("mezz.jei:jei-${project.minecraft_version}-fabric:${project.jei_version}") { transitive = false }
 	if (project.enable_jei.toBoolean()) {
-		modLocalRuntime("mezz.jei:jei-${project.minecraft_version}-fabric:${project.jei_version}") { transitive = false }
+		implementation("mezz.jei:jei-${project.minecraft_version}-fabric:${project.jei_version}") { transitive = false }
 	}
 }
 
@@ -78,7 +71,7 @@ processResources {
 }
 
 tasks.withType(JavaCompile).configureEach {
-	it.options.release = 17
+	it.options.release = 25
 }
 
 java {
@@ -87,8 +80,8 @@ java {
 	// If you remove this line, sources will not be generated.
 	withSourcesJar()
 
-	sourceCompatibility = JavaVersion.VERSION_17
-	targetCompatibility = JavaVersion.VERSION_17
+	sourceCompatibility = JavaVersion.VERSION_25
+	targetCompatibility = JavaVersion.VERSION_25
 }
 
 jar {
@@ -99,13 +92,11 @@ jar {
 	}
 }
 
-import com.modrinth.minotaur.dependencies.ModDependency
-
 modrinth {
 	token = '<PAT>';
 	projectId = 'OuLVx5LM' // The ID of your Modrinth project. Slugs will not work.
-	uploadFile = remapJar // Tells Minotaur to use the remapped jar
-	gameVersions = ['1.20.1'] // An array of game versions the version supports
+	uploadFile = jar // Tells Minotaur to use the built jar
+	gameVersions = ['26.1.2'] // An array of game versions the version supports
 	loaders = ['fabric'] // Self-explanatory.
 	dependencies = [
 			new ModDependency('P7dR8mSH', 'required') // Creates a new required dependency on Fabric API
