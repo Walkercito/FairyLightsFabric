@@ -1,7 +1,6 @@
 package de.lucalabs.fairylights.renderer.entity;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import de.lucalabs.fairylights.blocks.FairyLightBlocks;
 import de.lucalabs.fairylights.components.FairyLightComponents;
 import de.lucalabs.fairylights.entity.FenceFastenerEntity;
 import de.lucalabs.fairylights.renderer.RenderConstants;
@@ -9,9 +8,6 @@ import de.lucalabs.fairylights.renderer.RenderUtils;
 import de.lucalabs.fairylights.renderer.block.entity.FastenerRenderer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.renderer.SubmitNodeCollector;
-import net.minecraft.client.renderer.block.BlockModelRenderState;
-import net.minecraft.client.renderer.block.BlockModelResolver;
-import net.minecraft.client.renderer.block.model.BlockDisplayContext;
 import net.minecraft.client.renderer.entity.EntityRenderer;
 import net.minecraft.client.renderer.entity.EntityRendererProvider;
 import net.minecraft.client.renderer.entity.state.EntityRenderState;
@@ -25,13 +21,11 @@ public final class FenceFastenerRenderer extends EntityRenderer<FenceFastenerEnt
 
     private final FastenerRenderer renderer;
     private final TextureAtlasSprite sprite;
-    private final BlockModelResolver blockModels;
 
     public FenceFastenerRenderer(final EntityRendererProvider.Context context) {
         super(context);
         this.renderer = new FastenerRenderer(context::bakeLayer, context.getItemModelResolver());
         this.sprite = context.getSprites().get(RenderConstants.CONNECTIONS);
-        this.blockModels = context.getBlockModelResolver();
     }
 
     @Override
@@ -49,12 +43,6 @@ public final class FenceFastenerRenderer extends EntityRenderer<FenceFastenerEnt
     @Override
     public void submit(final State state, final PoseStack pose, final SubmitNodeCollector collector, final CameraRenderState cameraState) {
         if (state.fastener != null) {
-            pose.pushPose();
-            pose.translate(-0.5D, -0.5D, -0.5D);
-            final BlockModelRenderState blockState = new BlockModelRenderState();
-            this.blockModels.update(blockState, FairyLightBlocks.FASTENER.defaultBlockState(), BlockDisplayContext.create());
-            blockState.submit(pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY, 0);
-            pose.popPose();
             RenderUtils.submit(
                     collector,
                     pose,

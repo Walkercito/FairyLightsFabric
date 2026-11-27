@@ -9,6 +9,7 @@ import de.lucalabs.fairylights.connection.GarlandVineConnection;
 import de.lucalabs.fairylights.connection.HangingLightsConnection;
 import de.lucalabs.fairylights.connection.PennantBuntingConnection;
 import de.lucalabs.fairylights.fastener.Fastener;
+import de.lucalabs.fairylights.fastener.FastenerType;
 import de.lucalabs.fairylights.fastener.FenceFastener;
 import de.lucalabs.fairylights.model.light.BowModel;
 import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
@@ -60,6 +61,9 @@ public class FastenerRenderer {
 
         boolean renderBow = true;
         for (final Connection conn : fastener.getAllConnections()) {
+            if (conn.getDestination().getType() == FastenerType.PLAYER) {
+                continue;
+            }
             if (conn.getFastener() == fastener) {
                 this.renderConnection(delta, matrix, buf, packedLight, packedOverlay, conn);
             }

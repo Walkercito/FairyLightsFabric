@@ -94,7 +94,7 @@ public abstract class ConnectionItem extends Item {
     private boolean isConnectionInOtherHand(final Level world, final Player user, final ItemStack stack) {
         final Fastener<?> attacher = FairyLightComponents.FASTENER.get(user).get().orElseThrow(IllegalStateException::new);
         return attacher.getFirstConnection()
-                .map(connection -> !ItemStack.isSameItemSameComponents(connection.getItemStack(), stack))
+                .map(connection -> !connection.matches(stack))
                 .orElse(false);
     }
 
