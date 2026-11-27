@@ -5,6 +5,7 @@ import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.feature.FeatureType;
 import de.lucalabs.fairylights.feature.light.Light;
 import de.lucalabs.fairylights.feature.light.LightBehavior;
+import de.lucalabs.fairylights.items.DyeableItem;
 import de.lucalabs.fairylights.items.HangingLightsConnectionItem;
 import de.lucalabs.fairylights.items.LightVariant;
 import de.lucalabs.fairylights.items.SimpleLightVariant;
@@ -13,6 +14,7 @@ import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.string.StringType;
 import de.lucalabs.fairylights.string.StringTypes;
 import de.lucalabs.fairylights.util.ItemHelper;
+import de.lucalabs.fairylights.util.OreDictUtils;
 import de.lucalabs.fairylights.util.Tags;
 import java.util.*;
 import net.minecraft.core.BlockPos;
@@ -90,6 +92,28 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
                         1);
                 return true;
             }
+        }
+
+        if (featureType == FEATURE && OreDictUtils.isDye(heldStack) && !this.pattern.isEmpty()) {
+            final int index = feature % this.pattern.size();
+            final ItemStack light = this.pattern.get(index).copyWithCount(1);
+            DyeableItem.setColor(light, OreDictUtils.getDyeColor(heldStack));
+            light.remove(FairyLightItemComponents.COLORS);
+            this.pattern.set(index, light);
+            if (!player.getAbilities().instabuild) {
+                heldStack.shrink(1);
+            }
+            this.computeCatenary();
+            this.world.playSound(
+                    null,
+                    hit.x,
+                    hit.y,
+                    hit.z,
+                    FairyLightSounds.FEATURE_COLOR_CHANGE,
+                    SoundSource.BLOCKS,
+                    1,
+                    1);
+            return true;
         }
 
         if (super.interact(player, hit, featureType, feature, heldStack, hand)) {

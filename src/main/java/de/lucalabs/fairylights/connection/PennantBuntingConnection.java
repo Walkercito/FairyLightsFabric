@@ -5,8 +5,10 @@ import de.lucalabs.fairylights.feature.FeatureType;
 import de.lucalabs.fairylights.feature.Pennant;
 import de.lucalabs.fairylights.items.DyeableItem;
 import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.util.ItemHelper;
+import de.lucalabs.fairylights.util.OreDictUtils;
 import de.lucalabs.fairylights.util.Tags;
 import java.util.ArrayList;
 import java.util.List;
@@ -61,6 +63,19 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
                 this.world.playSound(null, hit.x, hit.y, hit.z, FairyLightSounds.FEATURE_COLOR_CHANGE, SoundSource.BLOCKS, 1, 1);
                 return true;
             }
+        }
+
+        if (featureType == FEATURE && OreDictUtils.isDye(heldStack) && !this.pattern.isEmpty()) {
+            final int index = feature % this.pattern.size();
+            final ItemStack pennant = this.pattern.get(index).copyWithCount(1);
+            DyeableItem.setColor(pennant, OreDictUtils.getDyeColor(heldStack));
+            this.pattern.set(index, pennant);
+            if (!player.getAbilities().instabuild) {
+                heldStack.shrink(1);
+            }
+            this.computeCatenary();
+            this.world.playSound(null, hit.x, hit.y, hit.z, FairyLightSounds.FEATURE_COLOR_CHANGE, SoundSource.BLOCKS, 1, 1);
+            return true;
         }
         return super.interact(player, hit, featureType, feature, heldStack, hand);
     }
