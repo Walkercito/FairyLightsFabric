@@ -1,13 +1,10 @@
 {
     "itemGroup.fairylights": "Fairy Lights",
-
     "fairylights.config": "Ajustes de Fairy Lights",
     "fairylights.editLetteredConnection": "Establecer texto de banderines",
     "fairylights.editLetteredConnection.allowed_characters": "Caracteres permitidos: %1$s",
-
     "block.fairylights.fastener": "Anclaje de cable",
     "entity.fairylights.fastener": "Anclaje",
-
     "block.fairylights.fairy_light": "Luz de hada",
     "block.fairylights.paper_lantern": "Farolillo de papel",
     "block.fairylights.orb_lantern": "Farolillo redondo",
@@ -27,7 +24,6 @@
     "block.fairylights.candle_lantern": "Farolillo de vela",
     "block.fairylights.oil_lantern": "Farol de aceite",
     "block.fairylights.incandescent_light": "Luz incandescente",
-
     "item.fairylights.hanging_lights": "Luces colgantes",
     "item.fairylights.pennant_bunting": "Banderines",
     "item.fairylights.tinsel": "Guirnalda de oropel",
@@ -36,7 +32,6 @@
     "item.fairylights.white_string": "Cuerda blanca",
     "item.fairylights.triangle_pennant": "Banderín triangular",
     "item.fairylights.square_pennant": "Banderín cuadrado",
-
     "item.fairylights.fairy_light": "Luz de hada",
     "item.fairylights.paper_lantern": "Farolillo de papel",
     "item.fairylights.orb_lantern": "Farolillo redondo",
@@ -56,21 +51,17 @@
     "item.fairylights.candle_lantern": "Farolillo de vela",
     "item.fairylights.oil_lantern": "Farol de aceite",
     "item.fairylights.incandescent_light": "Luz incandescente",
-
     "tag.item.fairylights.dyeable": "Objetos teñibles",
     "tag.item.fairylights.dyeable_lights": "Luces teñibles",
     "tag.item.fairylights.lights": "Luces",
     "tag.item.fairylights.twinkling_lights": "Luces intermitentes",
     "tag.item.fairylights.pennants": "Banderines",
-
-    "tooltip.fairylights.connection": "Úsalo en una valla para iniciar un cable. Úsalo en una segunda valla para conectarlo.",
+    "tooltip.fairylights.connection": "Conecta dos vallas.",
     "item.fairylights.twinkle": "Intermitente",
-
     "format.fairylights.colored": "%2$s (%1$s)",
     "format.fairylights.dyed_colored": "Color %1$s",
     "format.fairylights.color_changing": "%1$s (cambia de color)",
     "format.fairylights.text": "Texto: %1$s",
-
     "color.fairylights.black": "Negro",
     "color.fairylights.red": "Rojo",
     "color.fairylights.green": "Verde",
@@ -87,14 +78,12 @@
     "color.fairylights.magenta": "Magenta",
     "color.fairylights.orange": "Naranja",
     "color.fairylights.white": "Blanco",
-
-    "recipe.ingredient.tooltip": "\u00a77%s",
+    "recipe.ingredient.tooltip": "§7%s",
     "recipe.fairylights.ingredient.auxiliary.optional": "(Opcional)",
     "recipe.fairylights.twinkling_lights.glowstone": "Hace que esta luz parpadee.",
     "recipe.fairylights.hangingLights.light": "Añade luces para cambiar el patrón.",
     "recipe.fairylights.pennantBunting.pennant": "Añade banderines para cambiar el patrón.",
     "recipe.fairylights.hangingLights.string": "Usa tinte blanco para obtener cuerda blanca.",
-
     "subtitles.block.fairylights.jingleBell": "La campana suena",
     "subtitles.block.fairylights.cord.connect": "El cable se conecta",
     "subtitles.block.fairylights.cord.disconnect": "El cable se desconecta",
@@ -103,7 +92,6 @@
     "subtitles.block.fairylights.feature.lightTurnOn": "La luz se enciende",
     "subtitles.block.fairylights.feature.lightTurnOff": "La luz se apaga",
     "subtitles.block.fairylights.feature.colorChange": "El color cambia",
-
     "tutorial.fairylights.craft_hanging_lights.title": "Crea luces colgantes",
     "tutorial.fairylights.craft_hanging_lights.description": "Usa el libro de recetas para encontrar la receta."
 }

@@ -1,13 +1,10 @@
 {
     "itemGroup.fairylights": "Fairy Lights",
-
     "fairylights.config": "Fairy Lights Settings",
     "fairylights.editLetteredConnection": "Set Bunting Text",
     "fairylights.editLetteredConnection.allowed_characters": "Allowed characters: %1$s",
-
     "block.fairylights.fastener": "Connection Fastener",
     "entity.fairylights.fastener": "Fastener",
-
     "block.fairylights.fairy_light": "Fairy Light",
     "block.fairylights.paper_lantern": "Paper Lantern",
     "block.fairylights.orb_lantern": "Orb Lantern",
@@ -27,7 +24,6 @@
     "block.fairylights.candle_lantern": "Candle Lantern",
     "block.fairylights.oil_lantern": "Oil Lantern",
     "block.fairylights.incandescent_light": "Incandescent Light",
-
     "item.fairylights.hanging_lights": "Hanging Lights",
     "item.fairylights.pennant_bunting": "Pennant Bunting",
     "item.fairylights.tinsel": "Tinsel Garland",
@@ -36,7 +32,6 @@
     "item.fairylights.white_string": "White String",
     "item.fairylights.triangle_pennant": "Triangle Pennant",
     "item.fairylights.square_pennant": "Square Pennant",
-
     "item.fairylights.fairy_light": "Fairy Light",
     "item.fairylights.paper_lantern": "Paper Lantern",
     "item.fairylights.orb_lantern": "Orb Lantern",
@@ -56,21 +51,17 @@
     "item.fairylights.candle_lantern": "Candle Lantern",
     "item.fairylights.oil_lantern": "Oil Lantern",
     "item.fairylights.incandescent_light": "Incandescent Light",
-
     "tag.item.fairylights.dyeable": "Dyeable Items",
     "tag.item.fairylights.dyeable_lights": "Dyeable Lights",
     "tag.item.fairylights.lights": "Lights",
     "tag.item.fairylights.twinkling_lights": "Twinkling Lights",
     "tag.item.fairylights.pennants": "Pennants",
-
-    "tooltip.fairylights.connection": "Use on a fence to start a cord. Use on a second fence to connect.",
+    "tooltip.fairylights.connection": "Connect two fences.",
     "item.fairylights.twinkle": "Twinkling",
-
     "format.fairylights.colored": "%1$s %2$s",
     "format.fairylights.dyed_colored": "Tinted %1$s",
     "format.fairylights.color_changing": "Color-Changing %1$s",
     "format.fairylights.text": "Text: %1$s",
-
     "color.fairylights.black": "Black",
     "color.fairylights.red": "Red",
     "color.fairylights.green": "Green",
@@ -87,14 +78,12 @@
     "color.fairylights.magenta": "Magenta",
     "color.fairylights.orange": "Orange",
     "color.fairylights.white": "White",
-
-    "recipe.ingredient.tooltip": "\u00a77%s",
+    "recipe.ingredient.tooltip": "§7%s",
     "recipe.fairylights.ingredient.auxiliary.optional": "(Optional)",
     "recipe.fairylights.twinkling_lights.glowstone": "Makes this light twinkle.",
     "recipe.fairylights.hangingLights.light": "Add lights to change the pattern.",
     "recipe.fairylights.pennantBunting.pennant": "Add pennants to change the pattern.",
     "recipe.fairylights.hangingLights.string": "Use white dye for white string.",
-
     "subtitles.block.fairylights.jingleBell": "Bell jingles",
     "subtitles.block.fairylights.cord.connect": "Cord connects",
     "subtitles.block.fairylights.cord.disconnect": "Cord disconnects",
@@ -103,7 +92,6 @@
     "subtitles.block.fairylights.feature.lightTurnOn": "Light turns on",
     "subtitles.block.fairylights.feature.lightTurnOff": "Light turns off",
     "subtitles.block.fairylights.feature.colorChange": "Color changes",
-
     "tutorial.fairylights.craft_hanging_lights.title": "Craft Hanging Lights",
     "tutorial.fairylights.craft_hanging_lights.description": "Use the recipe book to find the recipe."
 }
