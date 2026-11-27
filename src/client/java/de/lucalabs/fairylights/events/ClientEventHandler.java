@@ -11,10 +11,15 @@ import de.lucalabs.fairylights.entity.FenceFastenerEntity;
 import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.fastener.FastenerType;
 import de.lucalabs.fairylights.net.serverbound.InteractionConnectionMessage;
+import de.lucalabs.fairylights.renderer.RenderConstants;
+import de.lucalabs.fairylights.renderer.RenderUtils;
 import java.util.ConcurrentModificationException;
 import java.util.Set;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
+import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.ShapeRenderer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
@@ -32,11 +37,32 @@ import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
+import net.minecraft.world.phys.shapes.Shapes;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.cca.api.v3.component.ComponentAccess;
 
 public final class ClientEventHandler {
     private ClientEventHandler() {
+    }
+
+    public static void register() {
+        LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
+            final AABB box = getHitBox();
+            if (box == null) {
+                return;
+            }
+            final Vec3 camera = Minecraft.getInstance().gameRenderer.getMainCamera().position();
+            RenderUtils.submit(context.submitNodeCollector(), context.poseStack(), RenderTypes.LINES, (pose, buffer) ->
+                    ShapeRenderer.renderShape(pose, buffer, Shapes.create(box.inflate(0.002D)), -camera.x, -camera.y, -camera.z, 0x000000, RenderConstants.HIGHLIGHT_ALPHA));
+        });
+    }
+
+    @Nullable
+    public static AABB getHitBox() {
+        if (Minecraft.getInstance().hitResult instanceof EntityHitResult result && result.getEntity() instanceof HitConnection hit) {
+            return hit.result.intersection.hitBox();
+        }
+        return null;
     }
 
     @Nullable

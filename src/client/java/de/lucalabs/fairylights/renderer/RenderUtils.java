@@ -26,6 +26,19 @@ public final class RenderUtils {
     public static void submit(
             final SubmitNodeCollector collector,
             final PoseStack pose,
+            final RenderType type,
+            final RenderTask task) {
+        collector.submitCustomGeometry(pose, type, (entry, buffer) -> {
+            final PoseStack stack = new PoseStack();
+            stack.last().pose().set(entry.pose());
+            stack.last().normal().set(entry.normal());
+            task.render(stack, buffer);
+        });
+    }
+
+    public static void submit(
+            final SubmitNodeCollector collector,
+            final PoseStack pose,
             final TextureAtlasSprite sprite,
             final RenderType type,
             final RenderTask task) {

@@ -25,7 +25,7 @@ public final class FastenerBlockEntityRenderer implements BlockEntityRenderer<Fa
     private final TextureAtlasSprite sprite;
 
     public FastenerBlockEntityRenderer(final BlockEntityRendererProvider.Context context) {
-        this.renderer = new FastenerRenderer(context::bakeLayer);
+        this.renderer = new FastenerRenderer(context::bakeLayer, context.itemModelResolver());
         this.sprite = context.sprites().get(RenderConstants.CONNECTIONS);
     }
 
@@ -64,6 +64,7 @@ public final class FastenerBlockEntityRenderer implements BlockEntityRenderer<Fa
                 this.sprite,
                 RenderTypes.entityCutout(TextureAtlas.LOCATION_BLOCKS),
                 (stack, buffer) -> this.renderer.render(state.fastener, state.delta, stack, buffer, state.lightCoords, OverlayTexture.NO_OVERLAY));
+        this.renderer.renderPennants(state.fastener, state.delta, pose, collector, state.lightCoords, OverlayTexture.NO_OVERLAY);
         pose.popPose();
     }
 

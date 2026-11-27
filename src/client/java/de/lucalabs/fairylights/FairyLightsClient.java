@@ -53,5 +53,6 @@ public class FairyLightsClient implements ClientModInitializer {
         ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.LIGHTS_WIRE, HangingLightsRenderer::wireLayer);
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> de.lucalabs.fairylights.events.ClientEventHandler.updateHitConnection());
+        de.lucalabs.fairylights.events.ClientEventHandler.register();
     }
 }

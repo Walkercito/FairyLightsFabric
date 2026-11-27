@@ -16,6 +16,8 @@ import de.lucalabs.fairylights.util.Tags;
 import java.util.function.Function;
 import net.minecraft.client.model.geom.ModelLayerLocation;
 import net.minecraft.client.model.geom.ModelPart;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.item.ItemModelResolver;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.FenceBlock;
@@ -27,13 +29,25 @@ public class FastenerRenderer {
     private final GarlandVineRenderer garland;
     private final GarlandTinselRenderer tinsel;
     private final BowModel bow;
+    private final PennantItemRenderer pennantItems;
 
-    public FastenerRenderer(final Function<ModelLayerLocation, ModelPart> baker) {
+    public FastenerRenderer(final Function<ModelLayerLocation, ModelPart> baker, final ItemModelResolver resolver) {
         this.hangingLights = new HangingLightsRenderer(baker);
         this.pennants = new PennantBuntingRenderer(baker);
         this.garland = new GarlandVineRenderer(baker);
         this.tinsel = new GarlandTinselRenderer(baker);
         this.bow = new BowModel(baker.apply(FairyLightModelLayers.BOW));
+        this.pennantItems = new PennantItemRenderer(resolver);
+    }
+
+    public void renderPennants(
+            final Fastener<?> fastener,
+            final float delta,
+            final PoseStack pose,
+            final SubmitNodeCollector collector,
+            final int packedLight,
+            final int packedOverlay) {
+        this.pennantItems.render(fastener, delta, pose, collector, packedLight, packedOverlay);
     }
 
     public void render(
