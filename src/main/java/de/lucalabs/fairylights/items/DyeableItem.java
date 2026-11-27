@@ -1,11 +1,9 @@
 package de.lucalabs.fairylights.items;
 
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import java.util.Arrays;
 import java.util.Optional;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 
@@ -45,15 +43,12 @@ public final class DyeableItem {
 
     public static int getColor(final DyeColor color) {
         if (color == DyeColor.BLACK) {
-            return 0x323232;
+            return 0xFF323232;
         }
         if (color == DyeColor.GRAY) {
-            return 0x606060;
+            return 0xFF606060;
         }
-        float[] colors = color.getTextureDiffuseColors();
-        return Mth.floor(colors[0] * 255.0F) << 16
-                | Mth.floor(colors[1] * 255.0F) << 8
-                | Mth.floor(colors[2] * 255.0F);
+        return color.getTextureDiffuseColor();
     }
 
     public static Optional<DyeColor> getDyeColor(final ItemStack stack) {
@@ -66,25 +61,11 @@ public final class DyeableItem {
     }
 
     public static ItemStack setColor(final ItemStack stack, final int color) {
-        setColor(stack.getOrCreateTag(), color);
+        stack.set(FairyLightItemComponents.COLOR, color);
         return stack;
     }
 
-    public static CompoundTag setColor(final CompoundTag tag, final DyeColor dye) {
-        return setColor(tag, getColor(dye));
-    }
-
-    public static CompoundTag setColor(final CompoundTag tag, final int color) {
-        tag.putInt("color", color);
-        return tag;
-    }
-
     public static int getColor(final ItemStack stack) {
-        final CompoundTag tag = stack.getTag();
-        return tag != null ? getColor(tag) : 0xFFFFFF;
-    }
-
-    public static int getColor(final CompoundTag tag) {
-        return tag.contains("color", Tag.TAG_INT) ? tag.getInt("color") : 0xFFFFFF;
+        return stack.getOrDefault(FairyLightItemComponents.COLOR, 0xFFFFFFFF);
     }
 }

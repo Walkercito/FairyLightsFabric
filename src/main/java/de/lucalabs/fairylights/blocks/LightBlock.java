@@ -1,8 +1,10 @@
 package de.lucalabs.fairylights.blocks;
 
+import com.mojang.serialization.MapCodec;
 import de.lucalabs.fairylights.blocks.entity.LightBlockEntity;
 import de.lucalabs.fairylights.items.DyeableItem;
 import de.lucalabs.fairylights.items.LightVariant;
+import de.lucalabs.fairylights.items.SimpleLightVariant;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.world.level.block.*;
@@ -44,6 +46,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class LightBlock extends FaceAttachedHorizontalDirectionalBlock implements EntityBlock {
+    public static final MapCodec<LightBlock> CODEC = simpleCodec(properties -> new LightBlock(properties, SimpleLightVariant.FAIRY_LIGHT));
     public static final BooleanProperty LIT = BlockStateProperties.LIT;
 
     private static final VoxelShape MIN_ANCHOR_SHAPE
@@ -92,6 +95,11 @@ public class LightBlock extends FaceAttachedHorizontalDirectionalBlock implement
 
     public LightVariant<?> getVariant() {
         return this.variant;
+    }
+
+    @Override
+    protected MapCodec<? extends LightBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -164,21 +172,41 @@ public class LightBlock extends FaceAttachedHorizontalDirectionalBlock implement
         return Collections.emptyList();
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public InteractionResult use(
+    protected InteractionResult useItemOn(
+            final ItemStack stack,
             final BlockState state,
             final Level world,
             final BlockPos pos,
             final Player player,
             final InteractionHand hand,
             final BlockHitResult hit) {
+        return this.toggle(world, pos, state, player, hand, hit);
+    }
+
+    @Override
+    protected InteractionResult useWithoutItem(
+            final BlockState state,
+            final Level world,
+            final BlockPos pos,
+            final Player player,
+            final BlockHitResult hit) {
+        return this.toggle(world, pos, state, player, InteractionHand.MAIN_HAND, hit);
+    }
+
+    private InteractionResult toggle(
+            final Level world,
+            final BlockPos pos,
+            final BlockState state,
+            final Player player,
+            final InteractionHand hand,
+            final BlockHitResult hit) {
         final BlockEntity entity = world.getBlockEntity(pos);
-        if (entity instanceof LightBlockEntity) {
-            ((LightBlockEntity) entity).interact(world, pos, state, player, hand, hit);
+        if (entity instanceof LightBlockEntity lightEntity) {
+            lightEntity.interact(world, pos, state, player, hand, hit);
             return InteractionResult.SUCCESS;
         }
-        return super.use(state, world, pos, player, hand, hit);
+        return InteractionResult.PASS;
     }
 
     @Environment(EnvType.CLIENT)
@@ -207,10 +235,11 @@ public class LightBlock extends FaceAttachedHorizontalDirectionalBlock implement
     }
 
     @Override
-    public ItemStack getCloneItemStack(
-            final BlockGetter world,
+    protected ItemStack getCloneItemStack(
+            final LevelReader world,
             final BlockPos pos,
-            final BlockState state) {
+            final BlockState state,
+            final boolean includeData) {
         final BlockEntity entity = world.getBlockEntity(pos);
         if (entity instanceof LightBlockEntity) {
             return ((LightBlockEntity) entity).getLight().getItem().copy();

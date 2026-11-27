@@ -1,5 +1,6 @@
 package de.lucalabs.fairylights.blocks;
 
+import com.mojang.serialization.MapCodec;
 import de.lucalabs.fairylights.blocks.entity.FairyLightBlockEntities;
 import de.lucalabs.fairylights.blocks.entity.FastenerBlockEntity;
 import de.lucalabs.fairylights.components.FairyLightComponents;
@@ -10,6 +11,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.DirectionalBlock;
@@ -20,6 +22,8 @@ import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.BlockBehaviour;
+import net.minecraft.world.level.redstone.Orientation;
 import net.minecraft.world.level.block.state.StateDefinition;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
@@ -29,6 +33,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 import org.jetbrains.annotations.Nullable;
 
 public final class FastenerBlock extends DirectionalBlock implements EntityBlock {
+    public static final MapCodec<FastenerBlock> CODEC = simpleCodec(FastenerBlock::new);
     public static final BooleanProperty TRIGGERED = BlockStateProperties.TRIGGERED;
 
     private static final VoxelShape NORTH_BOX = Block.box(6.0D, 6.0D, 12.0D, 10.0D, 10.0D, 16.0D);
@@ -38,7 +43,7 @@ public final class FastenerBlock extends DirectionalBlock implements EntityBlock
     private static final VoxelShape DOWN_BOX = Block.box(6.0D, 12.0D, 6.0D, 10.0D, 16.0D, 10.0D);
     private static final VoxelShape UP_BOX = Block.box(6.0D, 0.0D, 6.0D, 10.0D, 4.0D, 10.0D);
 
-    public FastenerBlock(final Block.Settings properties) {
+    public FastenerBlock(final BlockBehaviour.Properties properties) {
         super(properties);
         this.registerDefaultState(this.stateDefinition.any()
                 .setValue(FACING, Direction.NORTH)
@@ -74,6 +79,11 @@ public final class FastenerBlock extends DirectionalBlock implements EntityBlock
                 y += 0.375F;
         }
         return new Vec3(x, y, z);
+    }
+
+    @Override
+    protected MapCodec<? extends FastenerBlock> codec() {
+        return CODEC;
     }
 
     @Override
@@ -124,23 +134,18 @@ public final class FastenerBlock extends DirectionalBlock implements EntityBlock
         return createTickerHelper(type, FairyLightBlockEntities.FASTENER, FastenerBlockEntity::tick);
     }
 
-    @SuppressWarnings("deprecation")
     @Override
-    public void onRemove(
+    protected void affectNeighborsAfterRemoval(
             final BlockState state,
-            final Level world,
+            final ServerLevel level,
             final BlockPos pos,
-            final BlockState newState,
-            final boolean isMoving) {
-        if (!state.is(newState.getBlock())) {
-            final BlockEntity entity = world.getBlockEntity(pos);
-            if (entity instanceof FastenerBlockEntity) {
-                FairyLightComponents.FASTENER.get(entity).get().ifPresent(f -> {
-                    f.remove();
-                    f.dropItems(world, pos);
-                });
-            }
-            super.onRemove(state, world, pos, newState, isMoving);
+            final boolean movedByPiston) {
+        final BlockEntity entity = level.getBlockEntity(pos);
+        if (entity instanceof FastenerBlockEntity) {
+            FairyLightComponents.FASTENER.get(entity).get().ifPresent(f -> {
+                f.remove();
+                f.dropItems(level, pos);
+            });
         }
     }
 
@@ -177,7 +182,7 @@ public final class FastenerBlock extends DirectionalBlock implements EntityBlock
             final Level world,
             final BlockPos pos,
             final Block blockIn,
-            final BlockPos fromPos,
+            final Orientation orientation,
             final boolean isMoving) {
         if (state.canSurvive(world, pos)) {
             final boolean receivingPower = world.hasNeighborSignal(pos);

@@ -1,8 +1,6 @@
 package de.lucalabs.fairylights.items;
 
-import de.lucalabs.fairylights.components.FairyLightComponents;
 import de.lucalabs.fairylights.feature.light.LightBehavior;
-import org.ladysnake.cca.api.v3.component.ComponentProvider;
 import java.util.Optional;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -22,6 +20,9 @@ public abstract class LightVariant<T extends LightBehavior> {
     public abstract boolean isOrientable();
 
     public static synchronized Optional<LightVariant<?>> get(final ItemStack provider) {
-        return FairyLightComponents.LIGHT_VARIANT.get(provider).get();
+        if (provider.getItem() instanceof LightItem lightItem) {
+            return Optional.of(lightItem.getBlock().getVariant());
+        }
+        return Optional.empty();
     }
 }

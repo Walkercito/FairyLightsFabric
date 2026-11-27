@@ -97,7 +97,7 @@ public abstract class EntityFastenerAccessor<E extends Entity> implements Fasten
     @Override
     public CompoundTag serialize() {
         final CompoundTag tag = new CompoundTag();
-        tag.putUUID("UUID", this.uuid);
+        tag.putString("UUID", this.uuid.toString());
         if (this.pos != null) {
             final ListTag pos = new ListTag();
             pos.add(DoubleTag.valueOf(this.pos.x));
@@ -110,10 +110,10 @@ public abstract class EntityFastenerAccessor<E extends Entity> implements Fasten
 
     @Override
     public void deserialize(final CompoundTag tag) {
-        this.uuid = tag.getUUID("UUID");
-        if (tag.contains("Pos", Tag.TAG_LIST)) {
-            final ListTag pos = tag.getList("Pos", Tag.TAG_DOUBLE);
-            this.pos = new Vec3(pos.getDouble(0), pos.getDouble(1), pos.getDouble(2));
+        this.uuid = UUID.fromString(tag.getStringOr("UUID", ""));
+        if (tag.contains("Pos")) {
+            final ListTag pos = tag.getListOrEmpty("Pos");
+            this.pos = new Vec3(pos.getDoubleOr(0, 0.0D), pos.getDoubleOr(1, 0.0D), pos.getDoubleOr(2, 0.0D));
         } else {
             this.pos = null;
         }

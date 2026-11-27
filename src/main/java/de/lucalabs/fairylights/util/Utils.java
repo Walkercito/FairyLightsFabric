@@ -29,7 +29,7 @@ public final class Utils {
         if ((antecedent == null) != (consequent == null)) return false;
         if (!antecedent.getClass().equals(consequent.getClass())) return false;
         if (antecedent instanceof CompoundTag) {
-            for (String key : ((CompoundTag) antecedent).getAllKeys()) {
+            for (String key : ((CompoundTag) antecedent).keySet()) {
                 if (!impliesNbt(((CompoundTag) antecedent).get(key), ((CompoundTag) consequent).get(key))) {
                     return false;
                 }

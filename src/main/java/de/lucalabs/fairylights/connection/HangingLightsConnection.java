@@ -8,6 +8,7 @@ import de.lucalabs.fairylights.feature.light.LightBehavior;
 import de.lucalabs.fairylights.items.HangingLightsConnectionItem;
 import de.lucalabs.fairylights.items.LightVariant;
 import de.lucalabs.fairylights.items.SimpleLightVariant;
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.string.StringType;
 import de.lucalabs.fairylights.string.StringTypes;
@@ -17,7 +18,8 @@ import java.util.*;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.LongTag;
+import net.minecraft.nbt.NumericTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -123,7 +125,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
             if (this.lightUpdateTime > LIGHT_UPDATE_WAIT && this.lightUpdateTime % LIGHT_UPDATE_RATE == 0) {
                 if (this.lightUpdateIndex >= this.features.length) {
                     this.lightUpdateIndex = 0;
-                    this.lightUpdateTime = this.world.random.nextInt(LIGHT_UPDATE_WAIT / 2);
+                    this.lightUpdateTime = this.world.getRandom().nextInt(LIGHT_UPDATE_WAIT / 2);
                 } else {
                     this.setLight(BlockPos.containing(this.features[this.lightUpdateIndex++].getAbsolutePoint(this.fastener)));
                 }
@@ -230,7 +232,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         compound.putBoolean("isOn", this.isOn);
         final ListTag litBlocks = new ListTag();
         for (final BlockPos litBlock : this.litBlocks) {
-            litBlocks.add(NbtUtils.writeBlockPos(litBlock));
+            litBlocks.add(LongTag.valueOf(litBlock.asLong()));
         }
         compound.put("litBlocks", litBlocks);
         return compound;
@@ -239,11 +241,13 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     @Override
     public void deserialize(final CompoundTag compound) {
         super.deserialize(compound);
-        this.isOn = compound.getBoolean("isOn");
+        this.isOn = compound.getBooleanOr("isOn", true);
         this.litBlocks.clear();
-        final ListTag litBlocks = compound.getList("litBlocks", Tag.TAG_COMPOUND);
+        final ListTag litBlocks = compound.getListOrEmpty("litBlocks");
         for (int i = 0; i < litBlocks.size(); i++) {
-            this.litBlocks.add(NbtUtils.readBlockPos(litBlocks.getCompound(i)));
+            if (litBlocks.get(i) instanceof NumericTag position) {
+                this.litBlocks.add(BlockPos.of(position.longValue()));
+            }
         }
     }
 
@@ -253,7 +257,7 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
         HangingLightsConnectionItem.setString(compound, this.string);
         final ListTag tagList = new ListTag();
         for (final ItemStack light : this.pattern) {
-            tagList.add(light.save(new CompoundTag()));
+            tagList.add(FairyLightItemComponents.saveStack(light));
         }
         compound.put("pattern", tagList);
         return compound;
@@ -263,11 +267,11 @@ public final class HangingLightsConnection extends HangingFeatureConnection<Ligh
     public void deserializeLogic(final CompoundTag compound) {
         super.deserializeLogic(compound);
         this.string = HangingLightsConnectionItem.getString(compound);
-        final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
         this.pattern = new ArrayList<>();
-        for (int i = 0; i < patternList.size(); i++) {
-            final CompoundTag lightCompound = patternList.getCompound(i);
-            this.pattern.add(ItemStack.of(lightCompound));
+        for (final Tag entry : compound.getListOrEmpty("pattern")) {
+            if (entry instanceof CompoundTag light) {
+                this.pattern.add(FairyLightItemComponents.loadStack(light));
+            }
         }
     }
 }

@@ -16,12 +16,12 @@ public final class FairyLightRegistries {
     public static final ResourceKey<Registry<ConnectionType<?>>> CONNECTION_TYPE_KEY
             = ResourceKey.createRegistryKey(CONNECTION_TYPE_ID);
     public static final Registry<ConnectionType<?>> CONNECTION_TYPES
-            = FabricRegistryBuilder.createSimple(CONNECTION_TYPE_KEY).buildAndRegister();
+            = FabricRegistryBuilder.create(CONNECTION_TYPE_KEY).buildAndRegister();
 
     public static final ResourceKey<Registry<StringType>> STRING_TYPE_KEY
             = ResourceKey.createRegistryKey(STRING_TYPE_ID);
     public static final Registry<StringType> STRING_TYPES
-            = FabricRegistryBuilder.createSimple(STRING_TYPE_KEY).buildAndRegister();
+            = FabricRegistryBuilder.create(STRING_TYPE_KEY).buildAndRegister();
 
     private FairyLightRegistries() {}
 

@@ -27,7 +27,7 @@ public final class OreDictUtils {
     public static DyeColor getDyeColor(final ItemStack stack) {
         if (!stack.isEmpty()) {
             if (stack.getItem() instanceof DyeItem) {
-                return ((DyeItem) stack.getItem()).getDyeColor();
+                return stack.getOrDefault(net.minecraft.core.component.DataComponents.DYE, DyeColor.WHITE);
             }
             for (final Dye dye : Dye.values()) {
                 if (stack.is(dye.getName())) {

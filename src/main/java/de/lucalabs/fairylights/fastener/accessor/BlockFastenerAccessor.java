@@ -64,11 +64,13 @@ public final class BlockFastenerAccessor implements FastenerAccessor {
 
     @Override
     public CompoundTag serialize() {
-        return NbtUtils.writeBlockPos(this.pos);
+        final CompoundTag tag = new CompoundTag();
+        tag.putLong("pos", this.pos.asLong());
+        return tag;
     }
 
     @Override
     public void deserialize(final CompoundTag nbt) {
-        this.pos = NbtUtils.readBlockPos(nbt);
+        this.pos = BlockPos.of(nbt.getLongOr("pos", 0L));
     }
 }

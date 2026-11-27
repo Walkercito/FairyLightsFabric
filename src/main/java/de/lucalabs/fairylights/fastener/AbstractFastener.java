@@ -145,16 +145,16 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
 
     private void drop(final Level world, final BlockPos pos, final Connection connection) {
         if (!connection.shouldDrop()) return;
-        final float offsetX = world.random.nextFloat() * 0.8F + 0.1F;
-        final float offsetY = world.random.nextFloat() * 0.8F + 0.1F;
-        final float offsetZ = world.random.nextFloat() * 0.8F + 0.1F;
+        final float offsetX = world.getRandom().nextFloat() * 0.8F + 0.1F;
+        final float offsetY = world.getRandom().nextFloat() * 0.8F + 0.1F;
+        final float offsetZ = world.getRandom().nextFloat() * 0.8F + 0.1F;
         final ItemStack stack = connection.getItemStack();
         final ItemEntity entityItem = new ItemEntity(world, pos.getX() + offsetX, pos.getY() + offsetY, pos.getZ() + offsetZ, stack);
         final float scale = 0.05F;
         entityItem.setDeltaMovement(
-                world.random.nextGaussian() * scale,
-                world.random.nextGaussian() * scale + 0.2F,
-                world.random.nextGaussian() * scale
+                world.getRandom().nextGaussian() * scale,
+                world.getRandom().nextGaussian() * scale + 0.2F,
+                world.getRandom().nextGaussian() * scale
         );
         world.addFreshEntity(entityItem);
         connection.noDrop();
@@ -226,7 +226,7 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
 
     @Override
     public Connection connect(final Level world, final Fastener<?> destination, final ConnectionType<?> type, final CompoundTag compound, final boolean drop) {
-        final UUID uuid = Mth.createInsecureUUID();
+        final UUID uuid = UUID.randomUUID();
         final Connection connection = this.createOutgoingConnection(world, uuid, destination, type, compound, drop);
         destination.createIncomingConnection(world, uuid, this, type);
         return connection;
@@ -258,7 +258,7 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
             connectionCompound.put("connection", connection.serialize());
             Optional<Identifier> connectionTypeId = FairyLightRegistries.CONNECTION_TYPES
                     .getResourceKey(connection.getType())
-                    .map(ResourceKey::location);
+                    .map(ResourceKey::identifier);
 
             if (connectionTypeId.isPresent()) {
                 connectionCompound.putString("type", connectionTypeId.get().toString());
@@ -266,14 +266,14 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
                 continue;
             }
 
-            connectionCompound.putUUID("uuid", uuid);
+            connectionCompound.putString("uuid", uuid.toString());
             outgoing.add(connectionCompound);
         }
         compound.put("outgoing", outgoing);
         final ListTag incoming = new ListTag();
         for (final Map.Entry<UUID, Incoming> e : this.incoming.entrySet()) {
             final CompoundTag tag = new CompoundTag();
-            tag.putUUID("uuid", e.getKey());
+            tag.putString("uuid", e.getKey().toString());
             tag.put("fastener", FastenerType.serialize(e.getValue().fastener));
             incoming.add(tag);
         }
@@ -282,27 +282,27 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
 
     @Override
     public void readFromNbt (final CompoundTag compound) {
-        final ListTag listConnections = compound.getList("outgoing", Tag.TAG_COMPOUND);
+        final ListTag listConnections = compound.getListOrEmpty("outgoing");
         final List<UUID> nbtUuids = new ArrayList<>();
         for (int i = 0; i < listConnections.size(); i++) {
-            final CompoundTag connectionCompound = listConnections.getCompound(i);
+            final CompoundTag connectionCompound = listConnections.getCompoundOrEmpty(i);
             final UUID uuid;
-            if (connectionCompound.hasUUID("uuid")) {
-                uuid = connectionCompound.getUUID("uuid");
+            if (connectionCompound.contains("uuid")) {
+                uuid = UUID.fromString(connectionCompound.getStringOr("uuid", ""));
             } else {
-                uuid = Mth.createInsecureUUID();
+                uuid = UUID.randomUUID();
             }
             nbtUuids.add(uuid);
             if (this.outgoing.containsKey(uuid)) {
                 final Connection connection = this.outgoing.get(uuid);
-                connection.deserialize(connectionCompound.getCompound("connection"));
+                connection.deserialize(connectionCompound.getCompoundOrEmpty("connection"));
             } else {
                 final ConnectionType<?> type = FairyLightRegistries.CONNECTION_TYPES
-                        .get(Identifier.tryParse(connectionCompound.getString("type")));
+                        .getValue(Identifier.tryParse(connectionCompound.getStringOr("type", "")));
 
                 if (type != null) {
                     final Connection connection = type.create(this.world, this, uuid);
-                    connection.deserialize(connectionCompound.getCompound("connection"));
+                    connection.deserialize(connectionCompound.getCompoundOrEmpty("connection"));
                     this.outgoing.put(uuid, connection);
                 }
             }
@@ -316,11 +316,11 @@ public abstract class AbstractFastener<F extends FastenerAccessor> implements Fa
             }
         }
         this.incoming.clear();
-        final ListTag incoming = compound.getList("incoming", Tag.TAG_COMPOUND);
+        final ListTag incoming = compound.getListOrEmpty("incoming");
         for (int i = 0; i < incoming.size(); i++) {
-            final CompoundTag incomingNbt = incoming.getCompound(i);
-            final UUID uuid = incomingNbt.getUUID("uuid");
-            final FastenerAccessor fastener = FastenerType.deserialize(incomingNbt.getCompound("fastener"));
+            final CompoundTag incomingNbt = incoming.getCompoundOrEmpty(i);
+            final UUID uuid = UUID.fromString(incomingNbt.getStringOr("uuid", ""));
+            final FastenerAccessor fastener = FastenerType.deserialize(incomingNbt.getCompoundOrEmpty("fastener"));
             this.incoming.put(uuid, new Incoming(fastener, uuid));
         }
         this.setDirty();

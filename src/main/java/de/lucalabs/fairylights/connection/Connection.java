@@ -131,9 +131,8 @@ public abstract class Connection implements NbtSerializable {
 
     public ItemStack getItemStack() {
         final ItemStack stack = new ItemStack(this.getType().getItem());
-        final CompoundTag tagCompound = this.serializeLogic();
-        if (!tagCompound.isEmpty()) {
-            stack.setTag(tagCompound);
+        if (stack.getItem() instanceof ConnectionItem item) {
+            item.deserializeLogic(stack, this.serializeLogic());
         }
         return stack;
     }
@@ -177,9 +176,9 @@ public abstract class Connection implements NbtSerializable {
             final ItemEntity item = new ItemEntity(this.world, hit.x, hit.y, hit.z, stack);
             final float scale = 0.05F;
             item.setDeltaMovement(
-                    this.world.random.nextGaussian() * scale,
-                    this.world.random.nextGaussian() * scale + 0.2F,
-                    this.world.random.nextGaussian() * scale
+                    this.world.getRandom().nextGaussian() * scale,
+                    this.world.getRandom().nextGaussian() * scale + 0.2F,
+                    this.world.getRandom().nextGaussian() * scale
             );
             this.world.addFreshEntity(item);
         }
@@ -210,9 +209,8 @@ public abstract class Connection implements NbtSerializable {
     }
 
     public boolean matches(final ItemStack stack) {
-        if (this.getType().getItem().equals(stack.getItem())) {
-            final CompoundTag tag = stack.getTag();
-            return tag == null || Utils.impliesNbt(this.serializeLogic(), tag);
+        if (this.getType().getItem().equals(stack.getItem()) && stack.getItem() instanceof ConnectionItem item) {
+            return Utils.impliesNbt(this.serializeLogic(), item.serializeLogic(stack));
         }
         return false;
     }
@@ -224,7 +222,7 @@ public abstract class Connection implements NbtSerializable {
             if (this.shouldDrop()) {
                 ItemHelper.giveItemToPlayer(player, this.getItemStack());
             }
-            final CompoundTag data = heldStack.getTag();
+            final CompoundTag data = ((ConnectionItem) heldStack.getItem()).serializeLogic(heldStack);
             final ConnectionType<? extends Connection> type = ((ConnectionItem) heldStack.getItem()).getConnectionType();
             final Connection conn = this.fastener.connect(this.world, dest, type, data == null ? new CompoundTag() : data, true);
             conn.slack = this.slack;
@@ -276,7 +274,7 @@ public abstract class Connection implements NbtSerializable {
                 this.prevStretchStage = stage;
             }
             if (dist > MAX_LENGTH + PULL_RANGE) {
-                this.world.playSound(null, point.x, point.y, point.z, FairyLightSounds.CORD_SNAP, SoundSource.BLOCKS, 0.75F, 0.8F + this.world.random.nextFloat() * 0.3F);
+                this.world.playSound(null, point.x, point.y, point.z, FairyLightSounds.CORD_SNAP, SoundSource.BLOCKS, 0.75F, 0.8F + this.world.getRandom().nextFloat() * 0.3F);
                 this.remove();
             } else if (dest.isMoving()) {
                 dest.resistSnap(from);
@@ -391,10 +389,10 @@ public abstract class Connection implements NbtSerializable {
 
     @Override
     public void deserialize(final CompoundTag compound) {
-        this.destination = FastenerType.deserialize(compound.getCompound("destination"));
-        this.deserializeLogic(compound.getCompound("logic"));
-        this.slack = compound.contains("slack", Tag.TAG_ANY_NUMERIC) ? compound.getFloat("slack") : 1;
-        this.drop = !compound.contains("drop", Tag.TAG_ANY_NUMERIC) || compound.getBoolean("drop");
+        this.destination = FastenerType.deserialize(compound.getCompoundOrEmpty("destination"));
+        this.deserializeLogic(compound.getCompoundOrEmpty("logic"));
+        this.slack = compound.contains("slack") ? compound.getFloatOr("slack", 1) : 1;
+        this.drop = !compound.contains("drop") || compound.getBooleanOr("drop", true);
         this.updateCatenary = true;
     }
 

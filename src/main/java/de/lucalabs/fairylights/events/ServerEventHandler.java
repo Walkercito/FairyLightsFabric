@@ -13,7 +13,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Mob;
-import net.minecraft.world.entity.decoration.HangingEntity;
+import net.minecraft.world.entity.decoration.BlockAttachedEntity;
 import net.minecraft.world.entity.decoration.LeashFenceKnotEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -64,7 +64,7 @@ public final class ServerEventHandler {
         }
 
         if (checkHanging) {
-            final HangingEntity entity = FenceFastenerEntity.findHanging(world, pos);
+            final BlockAttachedEntity entity = FenceFastenerEntity.findHanging(world, pos);
             if (entity != null && !(entity instanceof LeashFenceKnotEntity)) {
                 return shouldFail ? InteractionResult.FAIL : InteractionResult.SUCCESS;
 //                event.setCanceled(true);

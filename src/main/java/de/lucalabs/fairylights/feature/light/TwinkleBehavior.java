@@ -2,7 +2,7 @@ package de.lucalabs.fairylights.feature.light;
 
 import de.lucalabs.fairylights.util.CubicBezier;
 import de.lucalabs.fairylights.util.MathHelper;
-import net.minecraft.nbt.CompoundTag;
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -19,8 +19,7 @@ public class TwinkleBehavior implements BrightnessLightBehavior {
     }
 
     public static boolean exists(final ItemStack stack) {
-        final CompoundTag tag = stack.getTag();
-        return tag != null && tag.getBoolean("twinkle");
+        return stack.getOrDefault(FairyLightItemComponents.TWINKLE, false);
     }
 
     @Override
@@ -39,6 +38,6 @@ public class TwinkleBehavior implements BrightnessLightBehavior {
 
     @Override
     public void tick(final Level world, final Vec3 origin, final Light<?> light) {
-        this.logic.tick(world.random, this.powered);
+        this.logic.tick(world.getRandom(), this.powered);
     }
 }

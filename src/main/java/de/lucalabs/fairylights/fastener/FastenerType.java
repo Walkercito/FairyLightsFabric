@@ -44,8 +44,8 @@ public enum FastenerType {
     }
 
     public static FastenerAccessor deserialize(final CompoundTag compound) {
-        final FastenerAccessor accessor = NAME_TO_TYPE.get(compound.getString("type")).createAccessor();
-        accessor.deserialize(compound.getCompound("data"));
+        final FastenerAccessor accessor = NAME_TO_TYPE.get(compound.getStringOr("type", "")).createAccessor();
+        accessor.deserialize(compound.getCompoundOrEmpty("data"));
         return accessor;
     }
 }

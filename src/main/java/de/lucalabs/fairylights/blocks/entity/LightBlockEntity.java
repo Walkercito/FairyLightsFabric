@@ -8,6 +8,7 @@ import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.util.MathHelper;
 import de.lucalabs.fairylights.util.matrix.MatrixStack;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
@@ -17,6 +18,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.level.block.state.properties.AttachFace;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
@@ -88,21 +91,21 @@ public class LightBlockEntity extends BlockEntity {
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        return this.saveWithoutMetadata();
+    public CompoundTag getUpdateTag(final HolderLookup.Provider registries) {
+        return this.saveCustomOnly(registries);
     }
 
     @Override
-    protected void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
-        compound.put("item", this.light.getItem().save(new CompoundTag()));
-        compound.putBoolean("on", this.on);
+    protected void saveAdditional(final ValueOutput output) {
+        super.saveAdditional(output);
+        output.store("item", ItemStack.CODEC, this.light.getItem());
+        output.putBoolean("on", this.on);
     }
 
     @Override
-    public void load(CompoundTag compound) {
-        super.load(compound);
-        this.setItemStack(ItemStack.of(compound.getCompound("item")));
-        this.setOn(compound.getBoolean("on"));
+    protected void loadAdditional(final ValueInput input) {
+        super.loadAdditional(input);
+        input.read("item", ItemStack.CODEC).ifPresent(this::setItemStack);
+        this.setOn(input.getBooleanOr("on", true));
     }
 }

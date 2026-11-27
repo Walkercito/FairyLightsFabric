@@ -4,6 +4,7 @@ import de.lucalabs.fairylights.fastener.Fastener;
 import de.lucalabs.fairylights.feature.FeatureType;
 import de.lucalabs.fairylights.feature.Pennant;
 import de.lucalabs.fairylights.items.DyeableItem;
+import de.lucalabs.fairylights.items.components.FairyLightItemComponents;
 import de.lucalabs.fairylights.sounds.FairyLightSounds;
 import de.lucalabs.fairylights.util.ItemHelper;
 import de.lucalabs.fairylights.util.Tags;
@@ -98,7 +99,7 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
         final CompoundTag compound = super.serializeLogic();
         final ListTag patternList = new ListTag();
         for (final ItemStack entry : this.pattern) {
-            patternList.add(entry.save(new CompoundTag()));
+            patternList.add(FairyLightItemComponents.saveStack(entry));
         }
         compound.put("pattern", patternList);
         return compound;
@@ -108,9 +109,10 @@ public final class PennantBuntingConnection extends HangingFeatureConnection<Pen
     public void deserializeLogic(final CompoundTag compound) {
         super.deserializeLogic(compound);
         this.pattern = new ArrayList<>();
-        final ListTag patternList = compound.getList("pattern", Tag.TAG_COMPOUND);
-        for (int i = 0; i < patternList.size(); i++) {
-            this.pattern.add(ItemStack.of(patternList.getCompound(i)));
+        for (final Tag entry : compound.getListOrEmpty("pattern")) {
+            if (entry instanceof CompoundTag light) {
+                this.pattern.add(FairyLightItemComponents.loadStack(light));
+            }
         }
     }
 }

@@ -2,6 +2,7 @@ package de.lucalabs.fairylights.blocks.entity;
 
 import de.lucalabs.fairylights.FairyLights;
 import de.lucalabs.fairylights.blocks.FairyLightBlocks;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import java.util.function.Supplier;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -13,9 +14,9 @@ public final class FairyLightBlockEntities {
 
     public static final BlockEntityType<FastenerBlockEntity> FASTENER = register(
             "fastener",
-            () -> BlockEntityType.Builder.of(FastenerBlockEntity::new, FairyLightBlocks.FASTENER).build(null));
+            () -> FabricBlockEntityTypeBuilder.create(FastenerBlockEntity::new, FairyLightBlocks.FASTENER).build());
 
-    public static final BlockEntityType<LightBlockEntity> LIGHT = register("light", () -> BlockEntityType.Builder.of(LightBlockEntity::new,
+    public static final BlockEntityType<LightBlockEntity> LIGHT = register("light", () -> FabricBlockEntityTypeBuilder.create(LightBlockEntity::new,
             FairyLightBlocks.FAIRY_LIGHT,
             FairyLightBlocks.PAPER_LANTERN,
             FairyLightBlocks.ORB_LANTERN,
@@ -34,7 +35,7 @@ public final class FairyLightBlockEntities {
             FairyLightBlocks.METEOR_LIGHT,
             FairyLightBlocks.OIL_LANTERN,
             FairyLightBlocks.CANDLE_LANTERN,
-            FairyLightBlocks.INCANDESCENT_LIGHT).build(null));
+            FairyLightBlocks.INCANDESCENT_LIGHT).build());
 
     private FairyLightBlockEntities() {
     }

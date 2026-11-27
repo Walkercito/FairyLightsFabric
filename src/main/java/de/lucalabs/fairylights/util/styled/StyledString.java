@@ -589,8 +589,8 @@ public final class StyledString implements Comparable<StyledString>, CharSequenc
     }
 
     public static StyledString deserialize(final CompoundTag compound) {
-        final String value = compound.getString("value");
-        Style[] styling = Arrays.stream(compound.getIntArray("styling"))
+        final String value = compound.getStringOr("value", "");
+        Style[] styling = Arrays.stream(compound.getIntArray("styling").orElse(new int[0]))
                 .mapToObj(Style::new)
                 .toArray(Style[]::new);
         if (styling.length != value.length()) {
