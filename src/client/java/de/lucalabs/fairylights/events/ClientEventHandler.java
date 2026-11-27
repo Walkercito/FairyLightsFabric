@@ -17,6 +17,8 @@ import java.util.ConcurrentModificationException;
 import java.util.Set;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.level.LevelRenderEvents;
+import net.fabricmc.fabric.api.event.player.AttackEntityCallback;
+import net.fabricmc.fabric.api.event.player.UseEntityCallback;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.ShapeRenderer;
@@ -46,6 +48,20 @@ public final class ClientEventHandler {
     }
 
     public static void register() {
+        UseEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
+            if (entity instanceof HitConnection hit) {
+                hit.processAction(PlayerAction.INTERACT);
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        });
+        AttackEntityCallback.EVENT.register((player, level, hand, entity, hitResult) -> {
+            if (entity instanceof HitConnection hit) {
+                hit.processAction(PlayerAction.ATTACK);
+                return InteractionResult.SUCCESS;
+            }
+            return InteractionResult.PASS;
+        });
         LevelRenderEvents.COLLECT_SUBMITS.register(context -> {
             final AABB box = getHitBox();
             if (box == null) {

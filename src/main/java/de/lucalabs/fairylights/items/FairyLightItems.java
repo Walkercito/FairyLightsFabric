@@ -42,6 +42,7 @@ public final class FairyLightItems {
     public static final LightItem OIL_LANTERN = register("oil_lantern", key -> new LightItem(FairyLightBlocks.OIL_LANTERN, properties(key).stacksTo(16)));
     public static final LightItem INCANDESCENT_LIGHT = register("incandescent_light", key -> new LightItem(FairyLightBlocks.INCANDESCENT_LIGHT, properties(key).stacksTo(16)));
 
+    public static final Item FENCE_FASTENER = register("fence_fastener", key -> new Item(properties(key)));
     public static final Item TRIANGLE_PENNANT = register("triangle_pennant", key -> new PennantItem(properties(key)));
     public static final Item SQUARE_PENNANT = register("square_pennant", key -> new PennantItem(properties(key)));
 

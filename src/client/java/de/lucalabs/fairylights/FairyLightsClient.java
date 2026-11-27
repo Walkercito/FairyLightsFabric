@@ -8,7 +8,6 @@ import de.lucalabs.fairylights.renderer.FairyLightModelLayers;
 import de.lucalabs.fairylights.renderer.block.entity.*;
 import de.lucalabs.fairylights.renderer.entity.FenceFastenerRenderer;
 import net.fabricmc.api.ClientModInitializer;
-import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import net.fabricmc.fabric.api.client.rendering.v1.ModelLayerRegistry;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
@@ -52,7 +51,6 @@ public class FairyLightsClient implements ClientModInitializer {
         ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.PENNANT_WIRE, PennantBuntingRenderer::wireLayer);
         ModelLayerRegistry.registerModelLayer(FairyLightModelLayers.LIGHTS_WIRE, HangingLightsRenderer::wireLayer);
 
-        ClientTickEvents.END_CLIENT_TICK.register(client -> de.lucalabs.fairylights.events.ClientEventHandler.updateHitConnection());
         de.lucalabs.fairylights.events.ClientEventHandler.register();
     }
 }

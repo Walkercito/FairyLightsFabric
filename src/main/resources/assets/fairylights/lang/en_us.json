@@ -93,5 +93,6 @@
     "subtitles.block.fairylights.feature.lightTurnOff": "Light turns off",
     "subtitles.block.fairylights.feature.colorChange": "Color changes",
     "tutorial.fairylights.craft_hanging_lights.title": "Craft Hanging Lights",
-    "tutorial.fairylights.craft_hanging_lights.description": "Use the recipe book to find the recipe."
+    "tutorial.fairylights.craft_hanging_lights.description": "Use the recipe book to find the recipe.",
+    "item.fairylights.fence_fastener": "Fence Fastener"
 }

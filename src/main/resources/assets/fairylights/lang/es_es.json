@@ -93,5 +93,6 @@
     "subtitles.block.fairylights.feature.lightTurnOff": "La luz se apaga",
     "subtitles.block.fairylights.feature.colorChange": "El color cambia",
     "tutorial.fairylights.craft_hanging_lights.title": "Crea luces colgantes",
-    "tutorial.fairylights.craft_hanging_lights.description": "Usa el libro de recetas para encontrar la receta."
+    "tutorial.fairylights.craft_hanging_lights.description": "Usa el libro de recetas para encontrar la receta.",
+    "item.fairylights.fence_fastener": "Anclaje de valla"
 }
